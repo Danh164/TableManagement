@@ -1,0 +1,199 @@
+@import url('https://fonts.googleapis.com/css2?family=Dancing+Script:wght@700&family=Roboto:wght@300&display=swap');
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+  font-family: 'Roboto', sans-serif;
+}
+
+h1 {
+  margin-top: 20px;
+  text-align: center;
+}
+
+.text-center {
+  text-align: center;
+}
+
+.text-right {
+  text-align: right;
+}
+
+.container,
+.root {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-left: 10%;
+  width: 80%;
+}
+
+.customer-table {
+  width: 100%;
+  margin-top: 20px;
+  border-collapse: collapse;
+}
+
+.customer-table thead {
+  background-color: #f9f9f9;
+}
+
+.customer-table thead tr th:last-child,
+.customer-table tbody tr td:last-child {
+  width: 10%;
+}
+
+.customer-table thead tr th:nth-child(2),
+.customer-table tbody tr td:nth-child(2) {
+  width: 10%;
+}
+
+.customer-table thead tr th:nth-child(3),
+.customer-table tbody tr td:nth-child(3) {
+  width: 20%;
+}
+
+.customer-table thead tr th:first-child,
+.customer-table tbody tr td:first-child {
+  width: 20%;
+}
+
+.customer-table thead tr.search-row th input,
+.customer-table thead tr.search-row th select {
+  padding: 5px 10px;
+}
+
+.customer-table thead tr.search-row th input.field-age {
+  width: 100%;
+}
+
+.customer-table thead tr.search-row th input.field-name {
+  width: 100%;
+}
+
+.customer-table thead tr.search-row th select.field-country {
+  width: 100%;
+}
+
+.customer-table thead tr.search-row th input.field-address {
+  width: 100%;
+}
+
+.customer-table thead tr.search-row th input.field-married {
+  width: 30px;
+}
+
+.customer-table thead tr.search-row {
+  background-color: #fff;
+  display: none;
+}
+
+.btn-search {
+  padding: 5px 15px;
+  border-radius: 10px;
+}
+
+.btn-search:hover {
+  cursor: pointer;
+  color: #fff;
+  background-color: #333;
+}
+
+.customer-table tr th,
+.customer-table tr td {
+  padding: 5px 30px;
+  border: 1px solid rgb(224, 223, 223);
+}
+
+.customer-table tbody tr:nth-child(even) {
+  background-color: #fcfcfc;
+}
+
+.customer-table tbody tr:hover {
+  background-color: #ddd;
+}
+
+.btn {
+  cursor: pointer;
+  padding: 10px 10px;
+}
+
+.btn-edit {
+  color: rgb(33, 33, 163);
+}
+
+.btn-filter {
+  color: green;
+}
+
+.btn-cancel {
+  color: blue;
+}
+
+.btn-delete {
+  color: rgb(180, 8, 8);
+}
+
+.btn-edit:hover,
+.btn-filter:hover,
+.btn-cancel:hover,
+.btn-delete:hover {
+  border-radius: 10px;
+  background-color: rgb(241, 237, 237);
+}
+
+.pagination {
+  display: flex;
+  margin-left: 10%;
+  justify-content: left;
+  align-items: center;
+  list-style: none;
+}
+
+.page-number-items {
+  display: flex;
+  justify-content: left;
+  list-style: none;
+}
+
+.pagination li.active {
+  background-color: rgb(6, 0, 14);
+  color: #fff;
+  border-radius: 10px;
+}
+
+.pagination .btn-active {
+  color: rgb(5, 165, 117);
+}
+
+.pagination li,
+.pagination span {
+  color: black;
+  float: left;
+  padding: 8px 16px;
+  margin-right: 2px;
+  text-decoration: none;
+}
+
+.pagination li.number-page:hover,
+li.btn-hover:hover {
+  cursor: pointer;
+  background-color: rgb(6, 0, 14);
+  color: #fff;
+  border-radius: 10px;
+}
+
+.alert {
+  position: absolute;
+  top: 0;
+  right: 0;
+  padding: 10px 100px;
+}
+
+.alert-success {
+  background-color: rgb(5, 165, 117);
+}
+
+.alert-error {
+  background-color: rgb(122, 0, 0);
+}
