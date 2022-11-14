@@ -1,2 +1,2 @@
 # TableManagement
-Training js 03.
+Training js 03
