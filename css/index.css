@@ -126,7 +126,7 @@ h1 {
   color: green;
 }
 
-.btn-cancel {
+.btn-clear-filter {
   color: blue;
 }
 
@@ -185,9 +185,11 @@ li.btn-hover:hover {
 
 .alert {
   position: absolute;
-  top: 0;
-  right: 0;
+  top: 10px;
+  color: #fff;
+  right: 10px;
   padding: 10px 100px;
+  border-radius: 10px;
 }
 
 .alert-success {

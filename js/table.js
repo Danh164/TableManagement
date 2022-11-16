@@ -753,7 +753,7 @@ const tableCustomer = {
     <th><input type="checkbox" class="field-married" /></th>
     <th>
       <i class="fa btn btn-filter fa-search" aria-hidden="true"></i>
-      <i class="fa btn btn-cancel fa-filter" aria-hidden="true"></i>
+      <i class="fa btn btn-clear-filter fa-filter" aria-hidden="true"></i>
     </th>
   </tr>`;
     searchRow.innerHTML = searchHTML;
@@ -780,24 +780,45 @@ const tableCustomer = {
     this.totalPage = Math.ceil(this.JSONData.length / this.size);
     let pagePerTotal = document.querySelector('.page-per-total');
     pagePerTotal.innerHTML = `${this.currentPage} of ${this.totalPage}`;
-    this.dataShow.map((item) => {
-      dataTable += `<tr>
-          <td>${item.Name}</td>
-          <td class="text-center">${item.Age}</td>
+
+    if (this.dataShow.length > 0) {
+      for (let i = this.start; i < this.end; i += 1) {
+        dataTable += `<tr>
+          <td>${this.dataShow[i].Name}</td>
+          <td class="text-center">${this.dataShow[i].Age}</td>
           <td>
-            ${this.getCountryName(item.Country)}
+            ${this.getCountryName(this.dataShow[i].Country)}
           </td>
-          </td><td>${item.Address}</td>
+          </td><td>${this.dataShow[i].Address}</td>
           <td class="text-center">
               <input type="checkbox" name="married" id="married" ${
-                item.Married ? 'checked' : ''
+                this.dataShow[i].Married ? 'checked' : ''
               } disabled/>
           <td class="text-center">
               <i class="edit btn btn-edit fa fa-pencil-square-o" aria-hidden="true"></i>
               <i class="delete btn btn-delete fa fa-trash"></i>
           </td>
       </tr>`;
-    });
+      }
+    }
+    // this.dataShow.map((item) => {
+    //   dataTable += `<tr>
+    //       <td>${item.Name}</td>
+    //       <td class="text-center">${item.Age}</td>
+    //       <td>
+    //         ${this.getCountryName(item.Country)}
+    //       </td>
+    //       </td><td>${item.Address}</td>
+    //       <td class="text-center">
+    //           <input type="checkbox" name="married" id="married" ${
+    //             item.Married ? 'checked' : ''
+    //           } disabled/>
+    //       <td class="text-center">
+    //           <i class="edit btn btn-edit fa fa-pencil-square-o" aria-hidden="true"></i>
+    //           <i class="delete btn btn-delete fa fa-trash"></i>
+    //       </td>
+    //   </tr>`;
+    // });
     let customerList = document.createElement('tbody');
     customerList.innerHTML = dataTable;
     document.querySelector('.customer-table tbody').innerHTML = dataTable;
@@ -807,7 +828,7 @@ const tableCustomer = {
     return result[0].Name;
   },
   renderListPage() {
-    this.totalPage = Math.ceil(this.JSONData.length / this.size);
+    this.totalPage = Math.ceil(this.dataShow.length / this.size);
     let html = '';
     let pageArr = this.pagination();
 
@@ -825,10 +846,12 @@ const tableCustomer = {
     pagePerTotal.innerHTML = `${this.currentPage} of ${this.totalPage}`;
     pageNumberItems.innerHTML = html;
   },
-  setDataShow() {
-    let start = (this.currentPage - 1) * this.size;
-    let end = this.currentPage * this.size;
-    this.dataShow = this.JSONData.slice(start, end);
+  setDataShow(data) {
+    this.dataShow = data;
+  },
+  setStartEndValue(start, end) {
+    this.start = start;
+    this.end = end > this.dataShow.length ? this.dataShow.length : end;
   },
   numberPageChange() {
     let curPage = document.querySelectorAll('ul.pagination li.number-page');
@@ -839,7 +862,10 @@ const tableCustomer = {
         this.currentPage = +curPage[i].textContent;
         curPage[i].className = 'active number-page';
         this.renderListPage();
-        this.setDataShow();
+        this.setStartEndValue(
+          (this.currentPage - 1) * this.size,
+          this.currentPage * this.size
+        );
         this.loadData();
         this.numberPageChange();
       });
@@ -896,7 +922,10 @@ const tableCustomer = {
     function reRender() {
       tableCustomer.renderListPage();
       tableCustomer.numberPageChange();
-      tableCustomer.setDataShow();
+      tableCustomer.setStartEndValue(
+        (this.currentPage - 1) * this.size,
+        this.currentPage * this.size
+      );
       tableCustomer.loadData();
     }
   },
@@ -976,16 +1005,81 @@ const tableCustomer = {
     let flag = true;
     let btnSearch = document.querySelector('.btn-search');
     btnSearch.addEventListener('click', () => {
-      console.log('click');
       if (flag) {
         $('.search-row').show();
       } else {
         $('.search-row').hide();
+        this.dataShow = this.JSONData;
+        this.currentPage = 1;
+        this.setStartEndValue(0, this.size);
+        this.loadData();
+        this.renderListPage();
+        this.numberPageChange();
       }
       flag = !flag;
     });
+
+    let btnFilter = document.querySelector('.btn-filter');
+    let fieldName, fieldAge, fieldCountry, fieldAddress, fieldMarried;
+    btnFilter.addEventListener('click', () => {
+      this.setDataShow(this.JSONData);
+      fieldName = document.querySelector('.field-name').value.trim();
+      fieldAge = document.querySelector('.field-age').value;
+      fieldCountry = document.querySelector('.field-country').value;
+      fieldAddress = document.querySelector('.field-address').value.trim();
+      fieldMarried = document.querySelector('.field-married').checked;
+
+      console.log(fieldMarried);
+
+      if (fieldName != '') {
+        this.dataShow = this.dataShow.filter((item) =>
+          item.Name.toLowerCase().includes(fieldName.toLowerCase())
+        );
+      }
+
+      if (fieldAge > 0) {
+        this.dataShow = this.dataShow.filter((item) => item.Age == fieldAge);
+        console.log('age ', this.dataShow);
+      }
+
+      if (fieldCountry > 0) {
+        this.dataShow = this.dataShow.filter(
+          (item) => item.Country == fieldCountry
+        );
+        console.log('country ', this.dataShow);
+      }
+
+      if (fieldAddress != '') {
+        this.dataShow = this.dataShow.filter((item) =>
+          item.Address.toLowerCase().includes(fieldAddress.toLowerCase())
+        );
+        console.log('address ', this.dataShow);
+      }
+
+      this.dataShow = this.dataShow.filter(
+        (item) => item.Married == fieldMarried
+      );
+      console.log('married ', this.dataShow);
+
+      this.currentPage = 1;
+      this.setStartEndValue(0, this.size);
+      this.loadData();
+      this.renderListPage();
+      this.numberPageChange();
+    });
+
+    let btnClearFilter = document.querySelector('.btn-clear-filter');
+    btnClearFilter.addEventListener('click', () => {
+      document.querySelector('.field-name').value = '';
+      document.querySelector('.field-age').value = '';
+      document.querySelector('.field-country').value = 0;
+      document.querySelector('.field-address').value = '';
+      document.querySelector('.field-married').checked = false;
+    });
   },
   currentPage: 1,
+  start: 0,
+  end: 0,
   dataShow: [],
   choosingItem: {},
   bgChoosingItem: '',
@@ -994,7 +1088,11 @@ const tableCustomer = {
   totalRecord: 0,
   totalPage: 0,
   init() {
-    this.setDataShow();
+    this.setDataShow(this.JSONData);
+    this.setStartEndValue(
+      (this.currentPage - 1) * this.size,
+      this.currentPage * this.size
+    );
     this.renderTableForm();
     this.renderHeadRow();
     this.renderSearchRow();
