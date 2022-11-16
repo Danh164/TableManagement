@@ -1107,6 +1107,7 @@ const tableCustomer = {
 
 function init() {
   tableCustomer.init();
+  console.log('avbc');
 }
 
 init();
