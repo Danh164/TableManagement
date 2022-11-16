@@ -40,7 +40,8 @@ h1 {
 
 .customer-table thead tr th:last-child,
 .customer-table tbody tr td:last-child {
-  width: 13%;
+  width: 10%;
+  padding: 0;
 }
 
 .customer-table thead tr th:nth-child(2),
