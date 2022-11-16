@@ -955,11 +955,17 @@ const tableCustomer = {
           this.JSONData = this.JSONData.filter(
             (item) => item.Name != cusInfo.Name
           );
+          this.dataShow = this.dataShow.filter(
+            (item) => item.Name != cusInfo.Name
+          );
           row.remove();
           this.showAlert('Xóa thành công', 'success');
           let newTotalPage = Math.ceil(this.dataShow.length / this.size);
           console.log(newTotalPage);
           if (newTotalPage < this.totalPage) {
+            if (this.currentPage > newTotalPage) {
+              this.currentPage -= 1;
+            }
             this.totalPage = newTotalPage;
             this.renderListPage();
             this.currentPageChange();
@@ -1029,8 +1035,6 @@ const tableCustomer = {
       fieldAddress = document.querySelector('.field-address').value.trim();
       fieldMarried = document.querySelector('.field-married').checked;
 
-      console.log(fieldMarried);
-
       if (fieldName != '') {
         this.dataShow = this.dataShow.filter((item) =>
           item.Name.toLowerCase().includes(fieldName.toLowerCase())
@@ -1039,28 +1043,29 @@ const tableCustomer = {
 
       if (fieldAge > 0) {
         this.dataShow = this.dataShow.filter((item) => item.Age == fieldAge);
-        console.log('age ', this.dataShow);
       }
 
       if (fieldCountry > 0) {
         this.dataShow = this.dataShow.filter(
           (item) => item.Country == fieldCountry
         );
-        console.log('country ', this.dataShow);
       }
 
       if (fieldAddress != '') {
         this.dataShow = this.dataShow.filter((item) =>
           item.Address.toLowerCase().includes(fieldAddress.toLowerCase())
         );
-        console.log('address ', this.dataShow);
       }
 
       this.dataShow = this.dataShow.filter(
         (item) => item.Married == fieldMarried
       );
-      console.log('married ', this.dataShow);
 
+      if (this.dataShow.length == 0) {
+        this.showAlert('no result can be found', 'info');
+      } else {
+        this.showAlert(`${this.dataShow.length} results be found`, 'info');
+      }
       this.currentPage = 1;
       this.setStartEndValue(0, this.size);
       this.loadData();
@@ -1107,7 +1112,6 @@ const tableCustomer = {
 
 function init() {
   tableCustomer.init();
-  console.log('avbc');
 }
 
 init();
