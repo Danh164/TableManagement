@@ -775,32 +775,70 @@ const tableCustomer = {
     headRow.innerHTML = headerHTML;
     document.querySelector('.customer-table thead').appendChild(headRow);
   },
+  renderEditRow(user) {
+    return `<tr class='edit-row'>
+              <td><input type="text" value='${
+                user.Name
+              }' class="edit-name" /></td>
+              <td><input type="number" value=${
+                user.Age
+              } class="edit-age" /></td>
+              <td>
+                <select
+                  name="edit-country"
+                  class="edit-country"
+                  id="edit-country"
+                >${this.countryData
+                  .map(
+                    (item) =>
+                      `<option value=${item.Id} ${
+                        item.Id == user.Country ? 'selected' : ''
+                      }>${item.Name}</option>`
+                  )
+                  .join('')}</select>
+              </td>
+              <td><input type="text" value='${
+                user.Address
+              }' class="edit-address" /></td>
+              <td class="text-center"><input type="checkbox" class="edit-married" ${
+                user.Married ? 'checked' : ''
+              }/></td>
+              <td class="text-center">
+                <i class="fa btn btn-save fa-check" aria-hidden="true" data-index=${
+                  user.Id
+                }></i>
+                <i class="fa btn btn-unsave fa-times" aria-hidden="true" data-index=${
+                  user.Id
+                }></i>
+              </td>
+            </tr>`;
+  },
   loadData() {
     let dataTable = '';
-    this.totalPage = Math.ceil(this.JSONData.length / this.size);
+    this.totalPage = Math.ceil(this.dataShow.length / this.size);
     let pagePerTotal = document.querySelector('.page-per-total');
     pagePerTotal.innerHTML = `${this.currentPage} of ${this.totalPage}`;
+    let id = Symbol.for('index');
 
     if (this.dataShow.length > 0) {
       for (let i = this.start; i < this.end; i += 1) {
-        let id = Symbol.for('id');
         dataTable += `<tr>
           <td>${this.dataShow[i].Name}</td>
           <td class="text-center">${this.dataShow[i].Age}</td>
-          <td>
+          <td data-id=${this.dataShow[i].Country}>
             ${this.getCountryName(this.dataShow[i].Country)}
           </td>
           </td><td>${this.dataShow[i].Address}</td>
-          <td class="text-center">
+          <td class="text-center" data-checked=${this.dataShow[i].Married}>
               <input type="checkbox" name="married" id="married" ${
                 this.dataShow[i].Married ? 'checked' : ''
               } disabled/>
           <td class="text-center">
               <i class="edit btn btn-edit fa fa-pencil-square-o" aria-hidden="true" data-index=${
-                this.dataShow[i][id]
+                this.filterActive == 1 ? this.dataShow[i][id] : i
               }></i>
               <i class="delete btn btn-delete fa fa-trash" data-index=${
-                this.dataShow[i][id]
+                this.filterActive == 1 ? this.dataShow[i][id] : i
               }></i>
           </td>
       </tr>`;
@@ -923,16 +961,108 @@ const tableCustomer = {
     root.insertBefore(div, main);
     setTimeout(() => document.querySelector('.alert').remove(), 1000);
   },
-  functionEditDelete() {
+  editInfoCustomer() {
+    const customerList = document.querySelector('.customers-list');
+    customerList.addEventListener('click', (e) => {
+      const targ = e.target;
+      if (targ.classList.contains('edit')) {
+        if (this.editActive == 1) {
+          this.choosingItem.innerHTML = this.bgChoosingItem;
+        }
+        this.editActive = 1;
+        let row = targ.parentElement.parentElement;
+        this.choosingItem = row;
+        this.bgChoosingItem = row.innerHTML;
+        let cusInfo = {
+          Name: row.children[0].textContent,
+          Age: row.children[1].textContent,
+          Country: Number(row.children[2].dataset.id),
+          Address: row.children[3].textContent,
+          Married: row.children[4].dataset.checked == 'true' ? true : false,
+          Id: Number(targ.dataset.index),
+        };
+        row.innerHTML = this.renderEditRow(cusInfo);
+
+        let btnSave = document.querySelector('.btn-save');
+        let btnUnSave = document.querySelector('.btn-unsave');
+
+        btnSave.addEventListener('click', () => {
+          let cusInfo = {};
+          cusInfo.Name = row.children[0].children[0].value;
+          cusInfo.Age = Number(row.children[1].children[0].value);
+          cusInfo.Country = Number(row.children[2].children[0].value);
+          cusInfo.Address = row.children[3].children[0].value;
+          cusInfo.Married = row.children[4].children[0].checked;
+
+          if (validateCusInfo(cusInfo)) {
+            this.JSONData[targ.dataset.index] = cusInfo;
+            row.innerHTML = `<td>${cusInfo.Name}</td>
+                            <td class="text-center">${cusInfo.Age}</td>
+                            <td data-id=${cusInfo.Country}>
+                              ${this.getCountryName(cusInfo.Country)}
+                            </td>
+                            <td>${cusInfo.Address}</td>
+                            <td class="text-center" data-checked=${
+                              cusInfo.Married ? 'true' : 'false'
+                            }>
+                                <input type="checkbox" name="married" id="married" ${
+                                  cusInfo.Married ? 'checked' : ''
+                                } disabled="">
+                            </td><td class="text-center">
+                                <i class="edit btn btn-edit fa fa-pencil-square-o" aria-hidden="true" data-index=${
+                                  targ.dataset.index
+                                }></i>
+                                <i class="delete btn btn-delete fa fa-trash" data-index=${
+                                  targ.dataset.index
+                                }></i>
+                            </td>`;
+            this.editActive = 0;
+            this.dataShow = this.JSONData;
+            if (this.filterActive == 0) {
+              this.loadData();
+            }
+            this.showAlert('Sửa thành công', 'success');
+          }
+        });
+
+        btnUnSave.addEventListener('click', () => {
+          row.innerHTML = this.bgChoosingItem;
+          this.editActive = 0;
+        });
+
+        const validateCusInfo = (cusInfo) => {
+          if (cusInfo.Name == '') {
+            this.showAlert('Tên không được để trống!', 'error');
+            return false;
+          }
+          if (cusInfo.Age < 18 || cusInfo.Age > 80) {
+            this.showAlert('Tuổi từ 18 -> 80', 'error');
+            return false;
+          }
+          if (cusInfo.Country == 0) {
+            this.showAlert('Quốc gia không được để trống!', 'error');
+            return false;
+          }
+          if (cusInfo.Address == '') {
+            this.showAlert('Địa chỉ không được để trống!', 'error');
+            return false;
+          }
+          return true;
+        };
+      }
+    });
+  },
+  deleteInfoCustomer() {
     const customerList = document.querySelector('.customers-list');
     customerList.addEventListener('click', (e) => {
       const targ = e.target;
       if (targ.classList.contains('delete')) {
         if (confirm('Confirm DELETE this customer?')) {
-          const row = targ.parentElement.parentElement;
           this.JSONData.splice(targ.dataset.index, 1);
-          this.dataShow = this.JSONData;
+          let row = targ.parentElement.parentElement;
           row.remove();
+          console.log(targ.dataset.index);
+          this.dataShow = this.JSONData;
           this.showAlert('Xóa thành công', 'success');
           let newTotalPage = Math.ceil(this.dataShow.length / this.size);
           if (newTotalPage < this.totalPage) {
@@ -943,10 +1073,10 @@ const tableCustomer = {
             this.renderListPage();
             this.currentPageChange();
           }
+          if (this.filterActive == 0) {
+            this.loadData();
+          }
         }
-      }
-      if (targ.classList.contains('edit')) {
-        this.showAlert('Sửa thành công', 'success');
       }
     });
   },
@@ -986,6 +1116,7 @@ const tableCustomer = {
     btnSearch.addEventListener('click', () => {
       if (flag) {
         $('.search-row').show();
+        this.filterActive = 1;
       } else {
         $('.search-row').hide();
         this.dataShow = this.JSONData;
@@ -994,14 +1125,20 @@ const tableCustomer = {
         this.loadData();
         this.renderListPage();
         this.numberPageChange();
+        this.filterActive = 0;
       }
       flag = !flag;
     });
 
     let btnFilter = document.querySelector('.btn-filter');
     let fieldName, fieldAge, fieldCountry, fieldAddress, fieldMarried;
+    let idx = Symbol.for('index');
     btnFilter.addEventListener('click', () => {
-      this.dataShow = this.JSONData;
+      this.dataShow = this.JSONData.map((item, index) => {
+        item[idx] = index;
+        return item;
+      });
+
       fieldName = document.querySelector('.field-name').value.trim();
       fieldAge = document.querySelector('.field-age').value;
       fieldCountry = document.querySelector('.field-country').value;
@@ -1013,23 +1150,19 @@ const tableCustomer = {
           item.Name.toLowerCase().includes(fieldName.toLowerCase())
         );
       }
-
       if (fieldAge > 0) {
         this.dataShow = this.dataShow.filter((item) => item.Age == fieldAge);
       }
-
       if (fieldCountry > 0) {
         this.dataShow = this.dataShow.filter(
           (item) => item.Country == fieldCountry
         );
       }
-
       if (fieldAddress != '') {
         this.dataShow = this.dataShow.filter((item) =>
           item.Address.toLowerCase().includes(fieldAddress.toLowerCase())
         );
       }
-
       this.dataShow = this.dataShow.filter(
         (item) => item.Married == fieldMarried
       );
@@ -1061,16 +1194,12 @@ const tableCustomer = {
   dataShow: [],
   choosingItem: {},
   bgChoosingItem: '',
-  editActive: 1,
+  editActive: 0,
+  filterActive: 0,
   size: 8,
   totalRecord: 0,
   totalPage: 0,
   init() {
-    this.JSONData = this.JSONData.map((item, index) => {
-      let id = Symbol.for('id');
-      item[id] = index;
-      return item;
-    });
     this.dataShow = this.JSONData;
     this.setStartEndValue(
       (this.currentPage - 1) * this.size,
@@ -1084,7 +1213,8 @@ const tableCustomer = {
     this.renderListPage();
     this.loadData();
     this.currentPageChange();
-    this.functionEditDelete();
+    this.editInfoCustomer();
+    this.deleteInfoCustomer();
   },
 };
 
