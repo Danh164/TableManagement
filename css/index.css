@@ -28,6 +28,12 @@ h1 {
   width: 80%;
 }
 
+.sort-panel {
+  margin-left: calc(10% + 10px);
+  margin-top: 10px;
+  margin-bottom: 5px;
+}
+
 .customer-table {
   width: 100%;
   margin-top: 20px;
@@ -59,6 +65,22 @@ h1 {
   width: 20%;
 }
 
+.customer-table thead tr th {
+  position: relative;
+}
+
+.customer-table thead tr th i.sort {
+  position: absolute;
+  top: 10%;
+  font-size: 20px;
+  right: 10px;
+}
+
+#sortingField,
+button#sort {
+  padding: 3px;
+}
+
 .customer-table thead tr.search-row th input,
 .customer-table thead tr.search-row th select {
   padding: 5px 10px;
@@ -66,6 +88,7 @@ h1 {
 
 .customer-table thead tr.search-row th input.field-age {
   width: 100%;
+  margin: 0;
 }
 
 .customer-table thead tr.search-row th input.field-name {
@@ -87,6 +110,12 @@ h1 {
 .customer-table thead tr.search-row {
   background-color: #fff;
   display: none;
+}
+
+.customer-table tbody tr td input,
+.customer-table tbody tr td select {
+  width: 100%;
+  padding: 3px;
 }
 
 .btn-search {

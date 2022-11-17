@@ -712,12 +712,13 @@ const tableCustomer = {
     { Name: 'Russia', Id: 7 },
   ],
   sortBy: {
-    Name: 0,
-    Age: 0,
-    Address: 0,
-    Country: 0,
-    Married: 0,
+    Name: false,
+    Age: false,
+    Address: false,
+    Country: false,
+    Married: false,
     choose: '',
+    chooseSortItem: '',
   },
   renderTableForm() {
     let table = document.createElement('table');
@@ -727,6 +728,47 @@ const tableCustomer = {
       '<thead class="text-center"></thead><tbody class="customers-list"></tbody>';
     table.innerHTML = tableHtml;
     document.querySelector('.root').appendChild(table);
+  },
+  renderSortForm() {
+    let div = document.createElement('div');
+    let dropdownSort = '';
+    for (let i in this.JSONData[0]) {
+      dropdownSort += `<option value=${i}>${i}</option>`;
+    }
+    div.className = 'sort-panel';
+    div.innerHTML = `<label>Sorting Field:
+                          <select id="sortingField">  ${dropdownSort}</select>
+                          <button type="button" id="sort">Sort</button>
+                      </label>`;
+    document.body.appendChild(div);
+
+    let btnSort = document.querySelector('#sort');
+    let dropDownSort = document.querySelector('#sortingField');
+    btnSort.addEventListener('click', () => {
+      if (this.sortBy.choose != '') {
+        document.querySelector(`.${this.sortBy.choose}`).innerHTML =
+          this.chooseSortItem;
+      }
+      this.sortBy.choose = dropDownSort.value;
+      this.sortBy[dropDownSort.value] = !this.sortBy[dropDownSort.value];
+      let chooseSort = document.querySelector(`.${this.sortBy.choose}`);
+      this.chooseSortItem = document.querySelector(
+        `.${this.sortBy.choose}`
+      ).innerHTML;
+      if (this.sortBy[this.sortBy.choose]) {
+        this.dataShow = this.dataShow.sort((a, b) =>
+          a[this.sortBy.choose] > b[this.sortBy.choose] ? 1 : -1
+        );
+        chooseSort.innerHTML = `${this.sortBy.choose}<i class="fa sort fa-sort-asc" aria-hidden="true"></i>`;
+      } else {
+        this.dataShow = this.dataShow.sort((a, b) =>
+          a[this.sortBy.choose] < b[this.sortBy.choose] ? 1 : -1
+        );
+        chooseSort.innerHTML = `${this.sortBy.choose}<i class="fa sort fa-sort-desc" aria-hidden="true"></i>`;
+      }
+
+      this.loadData();
+    });
   },
   renderPaginationForm() {
     const ul = document.createElement('ul');
@@ -769,7 +811,7 @@ const tableCustomer = {
     let headerHTML = '';
     let headRowNames = Object.keys(this.JSONData[0]);
     headRowNames.map((item) => {
-      headerHTML += `<th>${item}</th>`;
+      headerHTML += `<th class=${item}>${item}</th>`;
     });
     headerHTML += `<th><a class="btn-search"><i class="fa fa-search" aria-hidden="true"></a></th>`;
     headRow.innerHTML = headerHTML;
@@ -883,6 +925,7 @@ const tableCustomer = {
       curPage[i].addEventListener('click', () => {
         $('ul.pagination li.number-page').removeClass('active');
         this.currentPage = +curPage[i].textContent;
+
         curPage[i].className = 'active number-page';
         this.renderListPage();
         this.setStartEndValue(
@@ -920,9 +963,10 @@ const tableCustomer = {
 
     btnPrevious.addEventListener('click', () => {
       this.currentPage -= 1;
-      if (this.currentPage < 1) {
+      if (this.currentPage <= 1) {
         this.currentPage = 1;
       }
+
       curPage = document.querySelectorAll('ul.pagination li.number-page');
       $('ul.pagination li.number-page').removeClass('active');
       for (let i in curPage) {
@@ -1056,13 +1100,22 @@ const tableCustomer = {
     const customerList = document.querySelector('.customers-list');
     customerList.addEventListener('click', (e) => {
       const targ = e.target;
+      let id = Symbol.for('index');
       if (targ.classList.contains('delete')) {
         if (confirm('Confirm DELETE this customer?')) {
-          this.JSONData.splice(targ.dataset.index, 1);
+          if (this.filterActive == 1) {
+            this.JSONData = this.JSONData.filter(
+              (item) => item[id] != targ.dataset.index
+            );
+            this.dataShow = this.dataShow.filter(
+              (item) => item[id] != targ.dataset.index
+            );
+          } else {
+            this.JSONData.splice(targ.dataset.index, 1);
+          }
+
           let row = targ.parentElement.parentElement;
           row.remove();
-          console.log(targ.dataset.index);
-          this.dataShow = this.JSONData;
           this.showAlert('Xóa thành công', 'success');
           let newTotalPage = Math.ceil(this.dataShow.length / this.size);
           if (newTotalPage < this.totalPage) {
@@ -1073,9 +1126,11 @@ const tableCustomer = {
             this.renderListPage();
             this.currentPageChange();
           }
-          if (this.filterActive == 0) {
-            this.loadData();
-          }
+          this.setStartEndValue(
+            (this.currentPage - 1) * this.size,
+            this.currentPage * this.size
+          );
+          this.loadData();
         }
       }
     });
@@ -1133,6 +1188,7 @@ const tableCustomer = {
     let btnFilter = document.querySelector('.btn-filter');
     let fieldName, fieldAge, fieldCountry, fieldAddress, fieldMarried;
     let idx = Symbol.for('index');
+
     btnFilter.addEventListener('click', () => {
       this.dataShow = this.JSONData.map((item, index) => {
         item[idx] = index;
@@ -1205,6 +1261,7 @@ const tableCustomer = {
       (this.currentPage - 1) * this.size,
       this.currentPage * this.size
     );
+    this.renderSortForm();
     this.renderTableForm();
     this.renderHeadRow();
     this.renderSearchRow();
