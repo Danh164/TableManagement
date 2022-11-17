@@ -783,6 +783,7 @@ const tableCustomer = {
 
     if (this.dataShow.length > 0) {
       for (let i = this.start; i < this.end; i += 1) {
+        let id = Symbol.for('id');
         dataTable += `<tr>
           <td>${this.dataShow[i].Name}</td>
           <td class="text-center">${this.dataShow[i].Age}</td>
@@ -795,30 +796,16 @@ const tableCustomer = {
                 this.dataShow[i].Married ? 'checked' : ''
               } disabled/>
           <td class="text-center">
-              <i class="edit btn btn-edit fa fa-pencil-square-o" aria-hidden="true"></i>
-              <i class="delete btn btn-delete fa fa-trash"></i>
+              <i class="edit btn btn-edit fa fa-pencil-square-o" aria-hidden="true" data-index=${
+                this.dataShow[i][id]
+              }></i>
+              <i class="delete btn btn-delete fa fa-trash" data-index=${
+                this.dataShow[i][id]
+              }></i>
           </td>
       </tr>`;
       }
     }
-    // this.dataShow.map((item) => {
-    //   dataTable += `<tr>
-    //       <td>${item.Name}</td>
-    //       <td class="text-center">${item.Age}</td>
-    //       <td>
-    //         ${this.getCountryName(item.Country)}
-    //       </td>
-    //       </td><td>${item.Address}</td>
-    //       <td class="text-center">
-    //           <input type="checkbox" name="married" id="married" ${
-    //             item.Married ? 'checked' : ''
-    //           } disabled/>
-    //       <td class="text-center">
-    //           <i class="edit btn btn-edit fa fa-pencil-square-o" aria-hidden="true"></i>
-    //           <i class="delete btn btn-delete fa fa-trash"></i>
-    //       </td>
-    //   </tr>`;
-    // });
     let customerList = document.createElement('tbody');
     customerList.innerHTML = dataTable;
     document.querySelector('.customer-table tbody').innerHTML = dataTable;
@@ -843,11 +830,9 @@ const tableCustomer = {
     }
     let pagePerTotal = document.querySelector('.page-per-total');
     let pageNumberItems = document.querySelector('.page-number-items');
+
     pagePerTotal.innerHTML = `${this.currentPage} of ${this.totalPage}`;
     pageNumberItems.innerHTML = html;
-  },
-  setDataShow(data) {
-    this.dataShow = data;
   },
   setStartEndValue(start, end) {
     this.start = start;
@@ -919,7 +904,7 @@ const tableCustomer = {
       reRender();
     });
 
-    function reRender() {
+    const reRender = () => {
       tableCustomer.renderListPage();
       tableCustomer.numberPageChange();
       tableCustomer.setStartEndValue(
@@ -927,7 +912,7 @@ const tableCustomer = {
         this.currentPage * this.size
       );
       tableCustomer.loadData();
-    }
+    };
   },
   showAlert(message, className) {
     const div = document.createElement('div');
@@ -945,23 +930,11 @@ const tableCustomer = {
       if (targ.classList.contains('delete')) {
         if (confirm('Confirm DELETE this customer?')) {
           const row = targ.parentElement.parentElement;
-          let cusInfo = {
-            Name: row.children[0].textContent,
-            Age: row.children[1].textContent,
-            Address: row.children[2].textContent,
-            Country: row.children[3].textContent,
-          };
-
-          this.JSONData = this.JSONData.filter(
-            (item) => item.Name != cusInfo.Name
-          );
-          this.dataShow = this.dataShow.filter(
-            (item) => item.Name != cusInfo.Name
-          );
+          this.JSONData.splice(targ.dataset.index, 1);
+          this.dataShow = this.JSONData;
           row.remove();
           this.showAlert('Xóa thành công', 'success');
           let newTotalPage = Math.ceil(this.dataShow.length / this.size);
-          console.log(newTotalPage);
           if (newTotalPage < this.totalPage) {
             if (this.currentPage > newTotalPage) {
               this.currentPage -= 1;
@@ -1028,7 +1001,7 @@ const tableCustomer = {
     let btnFilter = document.querySelector('.btn-filter');
     let fieldName, fieldAge, fieldCountry, fieldAddress, fieldMarried;
     btnFilter.addEventListener('click', () => {
-      this.setDataShow(this.JSONData);
+      this.dataShow = this.JSONData;
       fieldName = document.querySelector('.field-name').value.trim();
       fieldAge = document.querySelector('.field-age').value;
       fieldCountry = document.querySelector('.field-country').value;
@@ -1093,7 +1066,12 @@ const tableCustomer = {
   totalRecord: 0,
   totalPage: 0,
   init() {
-    this.setDataShow(this.JSONData);
+    this.JSONData = this.JSONData.map((item, index) => {
+      let id = Symbol.for('id');
+      item[id] = index;
+      return item;
+    });
+    this.dataShow = this.JSONData;
     this.setStartEndValue(
       (this.currentPage - 1) * this.size,
       this.currentPage * this.size
