@@ -814,7 +814,7 @@ const tableCustomer = {
       <select name="field-country" class="field-country" id="field-country"></select>
     </th>
     <th><input type="text" class="field-address" /></th>
-    <th  class="field-married"><input type="checkbox" class="field-married" /></th>
+    <th><input type="checkbox" class="field-married" /></th>
     <th>
       <i class="fa btn btn-filter fa-search" aria-hidden="true"></i>
       <i class="fa btn btn-clear-filter fa-filter" aria-hidden="true"></i>
