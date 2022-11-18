@@ -20,7 +20,7 @@ h1 {
 }
 
 .container,
-.root {
+.app {
   display: flex;
   align-items: center;
   justify-content: center;

@@ -721,13 +721,16 @@ const tableCustomer = {
     chooseSortItem: '',
   },
   renderTableForm() {
+    let app = document.createElement('div');
+    app.className = 'app';
     let table = document.createElement('table');
     table.className = 'customer-table';
     table.id = 'customer-table';
     let tableHtml =
       '<thead class="text-center"></thead><tbody class="customers-list"></tbody>';
     table.innerHTML = tableHtml;
-    document.querySelector('.root').appendChild(table);
+    document.body.appendChild(app);
+    document.querySelector('.app').appendChild(table);
   },
   renderSortForm() {
     let div = document.createElement('div');
@@ -755,7 +758,26 @@ const tableCustomer = {
       this.chooseSortItem = document.querySelector(
         `.${this.sortBy.choose}`
       ).innerHTML;
-      if (this.sortBy[this.sortBy.choose]) {
+
+      if (this.sortBy.choose == 'Country') {
+        if (this.sortBy[this.sortBy.choose]) {
+          this.dataShow = this.dataShow.sort((a, b) =>
+            this.getCountryName(a[this.sortBy.choose]) >
+            this.getCountryName(b[this.sortBy.choose])
+              ? 1
+              : -1
+          );
+          chooseSort.innerHTML = `${this.sortBy.choose}<i class="fa sort fa-sort-asc" aria-hidden="true"></i>`;
+        } else {
+          this.dataShow = this.dataShow.sort((a, b) =>
+            this.getCountryName(a[this.sortBy.choose]) <
+            this.getCountryName(b[this.sortBy.choose])
+              ? 1
+              : -1
+          );
+          chooseSort.innerHTML = `${this.sortBy.choose}<i class="fa sort fa-sort-desc" aria-hidden="true"></i>`;
+        }
+      } else if (this.sortBy[this.sortBy.choose]) {
         this.dataShow = this.dataShow.sort((a, b) =>
           a[this.sortBy.choose] > b[this.sortBy.choose] ? 1 : -1
         );
@@ -962,6 +984,7 @@ const tableCustomer = {
     });
 
     btnPrevious.addEventListener('click', () => {
+      console.log(this.currentPage);
       this.currentPage -= 1;
       if (this.currentPage <= 1) {
         this.currentPage = 1;
@@ -970,6 +993,7 @@ const tableCustomer = {
       curPage = document.querySelectorAll('ul.pagination li.number-page');
       $('ul.pagination li.number-page').removeClass('active');
       for (let i in curPage) {
+        console.log(curPage[i].textContent);
         if (curPage[i].textContent == this.currentPage) {
           curPage[i].className = 'active number-page';
           break;
@@ -1000,9 +1024,9 @@ const tableCustomer = {
     const div = document.createElement('div');
     div.className = `alert alert-${className}`;
     div.appendChild(document.createTextNode(message));
-    const root = document.querySelector('.root');
+    const app = document.querySelector('.app');
     const main = document.querySelector('.main');
-    root.insertBefore(div, main);
+    app.insertBefore(div, main);
     setTimeout(() => document.querySelector('.alert').remove(), 1000);
   },
   editInfoCustomer() {
@@ -1107,6 +1131,7 @@ const tableCustomer = {
             this.JSONData = this.JSONData.filter(
               (item) => item[id] != targ.dataset.index
             );
+            console.log(targ.dataset.index);
             this.dataShow = this.dataShow.filter(
               (item) => item[id] != targ.dataset.index
             );
@@ -1124,12 +1149,12 @@ const tableCustomer = {
             }
             this.totalPage = newTotalPage;
             this.renderListPage();
-            this.currentPageChange();
           }
           this.setStartEndValue(
             (this.currentPage - 1) * this.size,
             this.currentPage * this.size
           );
+          this.numberPageChange();
           this.loadData();
         }
       }
@@ -1171,6 +1196,10 @@ const tableCustomer = {
     btnSearch.addEventListener('click', () => {
       if (flag) {
         $('.search-row').show();
+        this.dataShow = this.JSONData.map((item, index) => {
+          item[idx] = index;
+          return item;
+        });
         this.filterActive = 1;
       } else {
         $('.search-row').hide();
@@ -1190,11 +1219,7 @@ const tableCustomer = {
     let idx = Symbol.for('index');
 
     btnFilter.addEventListener('click', () => {
-      this.dataShow = this.JSONData.map((item, index) => {
-        item[idx] = index;
-        return item;
-      });
-
+      this.dataShow = this.JSONData;
       fieldName = document.querySelector('.field-name').value.trim();
       fieldAge = document.querySelector('.field-age').value;
       fieldCountry = document.querySelector('.field-country').value;
@@ -1244,6 +1269,7 @@ const tableCustomer = {
       document.querySelector('.field-married').checked = false;
     });
   },
+  documentApp: '',
   currentPage: 1,
   start: 0,
   end: 0,
