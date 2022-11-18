@@ -1186,15 +1186,7 @@ const tableCustomer = {
       rangeWithDots.push(i);
       l = i;
     }
-
     return rangeWithDots;
-  },
-  filterBy: {
-    name: '',
-    age: '',
-    country: '',
-    address: '',
-    married: 'default',
   },
   filterByField() {
     let flag = true;
@@ -1290,6 +1282,13 @@ const tableCustomer = {
       document.querySelector('.field-address').value = '';
       document.querySelector('.field-married').checked = false;
     });
+  },
+  filterBy: {
+    name: '',
+    age: '',
+    country: '',
+    address: '',
+    married: 'default',
   },
   documentApp: '',
   currentPage: 1,
