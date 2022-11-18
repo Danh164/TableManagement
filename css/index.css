@@ -52,12 +52,21 @@ h1 {
 
 .customer-table thead tr th:nth-child(2),
 .customer-table tbody tr td:nth-child(2) {
-  width: 10%;
+  width: 15%;
 }
 
 .customer-table thead tr th:nth-child(3),
 .customer-table tbody tr td:nth-child(3) {
   width: 20%;
+}
+.customer-table thead tr th:nth-child(4),
+.customer-table tbody tr td:nth-child(4) {
+  width: 25%;
+}
+
+.customer-table thead tr th:nth-child(5),
+.customer-table tbody tr td:nth-child(5) {
+  width: 10%;
 }
 
 .customer-table thead tr th:first-child,
@@ -103,8 +112,9 @@ button#sort {
   width: 100%;
 }
 
-.customer-table thead tr.search-row th input.field-married {
-  width: 30px;
+.customer-table thead tr.search-row th.field-married {
+  width: 10%;
+  position: relative;
 }
 
 .customer-table thead tr.search-row {

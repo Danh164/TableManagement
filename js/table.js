@@ -814,7 +814,7 @@ const tableCustomer = {
       <select name="field-country" class="field-country" id="field-country"></select>
     </th>
     <th><input type="text" class="field-address" /></th>
-    <th><input type="checkbox" class="field-married" /></th>
+    <th  class="field-married"><input type="checkbox" class="field-married" /></th>
     <th>
       <i class="fa btn btn-filter fa-search" aria-hidden="true"></i>
       <i class="fa btn btn-clear-filter fa-filter" aria-hidden="true"></i>
@@ -1131,7 +1131,6 @@ const tableCustomer = {
             this.JSONData = this.JSONData.filter(
               (item) => item[id] != targ.dataset.index
             );
-            console.log(targ.dataset.index);
             this.dataShow = this.dataShow.filter(
               (item) => item[id] != targ.dataset.index
             );
@@ -1190,9 +1189,20 @@ const tableCustomer = {
 
     return rangeWithDots;
   },
+  filterBy: {
+    name: '',
+    age: '',
+    country: '',
+    address: '',
+    married: 'default',
+  },
   filterByField() {
     let flag = true;
     let btnSearch = document.querySelector('.btn-search');
+    let btnFilter = document.querySelector('.btn-filter');
+    let fieldMarried = document.querySelector('.field-married');
+    let idx = Symbol.for('index');
+
     btnSearch.addEventListener('click', () => {
       if (flag) {
         $('.search-row').show();
@@ -1203,6 +1213,7 @@ const tableCustomer = {
         this.filterActive = 1;
       } else {
         $('.search-row').hide();
+        this.filterBy['married'] = 'default';
         this.dataShow = this.JSONData;
         this.currentPage = 1;
         this.setStartEndValue(0, this.size);
@@ -1214,39 +1225,49 @@ const tableCustomer = {
       flag = !flag;
     });
 
-    let btnFilter = document.querySelector('.btn-filter');
-    let fieldName, fieldAge, fieldCountry, fieldAddress, fieldMarried;
-    let idx = Symbol.for('index');
+    fieldMarried.addEventListener('click', () => {
+      this.filterBy['married'] = fieldMarried.checked;
+    });
 
     btnFilter.addEventListener('click', () => {
       this.dataShow = this.JSONData;
-      fieldName = document.querySelector('.field-name').value.trim();
-      fieldAge = document.querySelector('.field-age').value;
-      fieldCountry = document.querySelector('.field-country').value;
-      fieldAddress = document.querySelector('.field-address').value.trim();
-      fieldMarried = document.querySelector('.field-married').checked;
+      this.filterBy['name'] = document
+        .querySelector('.field-name')
+        .value.trim();
+      this.filterBy['age'] = document.querySelector('.field-age').value;
+      this.filterBy['country'] = document.querySelector('.field-country').value;
+      this.filterBy['address'] = document
+        .querySelector('.field-address')
+        .value.trim();
 
-      if (fieldName != '') {
+      if (this.filterBy['name'] != '') {
         this.dataShow = this.dataShow.filter((item) =>
-          item.Name.toLowerCase().includes(fieldName.toLowerCase())
+          item.Name.toLowerCase().includes(this.filterBy['name'].toLowerCase())
         );
       }
-      if (fieldAge > 0) {
-        this.dataShow = this.dataShow.filter((item) => item.Age == fieldAge);
-      }
-      if (fieldCountry > 0) {
+      if (this.filterBy['age'] > 0) {
         this.dataShow = this.dataShow.filter(
-          (item) => item.Country == fieldCountry
+          (item) => item.Age == this.filterBy['age']
         );
       }
-      if (fieldAddress != '') {
+      if (this.filterBy['country'] > 0) {
+        this.dataShow = this.dataShow.filter(
+          (item) => item.Country == this.filterBy['country']
+        );
+      }
+      if (this.filterBy['address'] != '') {
         this.dataShow = this.dataShow.filter((item) =>
-          item.Address.toLowerCase().includes(fieldAddress.toLowerCase())
+          item.Address.toLowerCase().includes(
+            this.filterBy['address'].toLowerCase()
+          )
         );
       }
-      this.dataShow = this.dataShow.filter(
-        (item) => item.Married == fieldMarried
-      );
+
+      if (this.filterBy['married'] != 'default') {
+        this.dataShow = this.dataShow.filter(
+          (item) => item.Married == this.filterBy['married']
+        );
+      }
 
       if (this.dataShow.length == 0) {
         this.showAlert('no result can be found', 'info');
@@ -1262,6 +1283,7 @@ const tableCustomer = {
 
     let btnClearFilter = document.querySelector('.btn-clear-filter');
     btnClearFilter.addEventListener('click', () => {
+      this.filterBy['married'] = 'default';
       document.querySelector('.field-name').value = '';
       document.querySelector('.field-age').value = '';
       document.querySelector('.field-country').value = 0;
