@@ -1282,6 +1282,7 @@ const tableCustomer = {
   totalRecord: 0,
   totalPage: 0,
   init() {
+    this.documentApp = document.querySelector('#app');
     this.dataShow = this.JSONData;
     this.setStartEndValue(
       (this.currentPage - 1) * this.size,
