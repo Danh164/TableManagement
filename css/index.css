@@ -20,16 +20,17 @@ h1 {
 }
 
 .container,
-.app {
-  display: flex;
-  align-items: center;
-  justify-content: center;
+#app,
+#app2 {
   margin-left: 10%;
   width: 80%;
 }
 
+.hidden {
+  display: none;
+}
+
 .sort-panel {
-  margin-left: calc(10% + 10px);
   margin-top: 10px;
   margin-bottom: 5px;
 }
@@ -119,6 +120,9 @@ button#sort {
 
 .customer-table thead tr.search-row {
   background-color: #fff;
+}
+
+.customer-table thead tr .hidden {
   display: none;
 }
 
@@ -185,9 +189,8 @@ button#sort {
 }
 
 .pagination {
+  font-size: 14px;
   display: flex;
-  margin-left: 10%;
-  justify-content: left;
   align-items: center;
   list-style: none;
 }
@@ -204,15 +207,11 @@ button#sort {
   border-radius: 10px;
 }
 
-.pagination .btn-active {
-  color: rgb(5, 165, 117);
-}
-
 .pagination li,
 .pagination span {
   color: black;
   float: left;
-  padding: 8px 16px;
+  padding: 8px 8px;
   margin-right: 2px;
   text-decoration: none;
 }

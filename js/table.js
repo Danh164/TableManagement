@@ -718,19 +718,29 @@ const tableCustomer = {
     Country: false,
     Married: false,
     choose: '',
-    chooseSortItem: '',
+    bgSortItem: '',
+  },
+  renderAppForm() {
+    let table = document.createElement('table');
+    let ul = document.createElement('ul');
+
+    table.className = 'customer-table';
+    table.id = 'customer-table';
+    table.innerHTML =
+      '<thead class="text-center"></thead><tbody class="customers-list"></tbody>';
+    this.queryRoot.appendChild(table);
+
+    ul.className = 'pagination';
+    this.queryRoot.appendChild(ul);
   },
   renderTableForm() {
-    let app = document.createElement('div');
-    app.className = 'app';
     let table = document.createElement('table');
     table.className = 'customer-table';
     table.id = 'customer-table';
     let tableHtml =
       '<thead class="text-center"></thead><tbody class="customers-list"></tbody>';
     table.innerHTML = tableHtml;
-    document.body.appendChild(app);
-    document.querySelector('.app').appendChild(table);
+    this.queryRoot.appendChild(table);
   },
   renderSortForm() {
     let div = document.createElement('div');
@@ -743,90 +753,101 @@ const tableCustomer = {
                           <select id="sortingField">  ${dropdownSort}</select>
                           <button type="button" id="sort">Sort</button>
                       </label>`;
-    document.body.appendChild(div);
-
-    let btnSort = document.querySelector('#sort');
-    let dropDownSort = document.querySelector('#sortingField');
+    this.queryRoot.appendChild(div);
+  },
+  sortByField() {
+    let btnSort = this.queryRoot.querySelector('#sort');
+    let dropDownSort = this.queryRoot.querySelector('#sortingField');
+    let fieldChooseSort;
     btnSort.addEventListener('click', () => {
       if (this.sortBy.choose != '') {
-        document.querySelector(`.${this.sortBy.choose}`).innerHTML =
-          this.chooseSortItem;
+        this.queryRoot.querySelector(`.${this.sortBy.choose}`).innerHTML =
+          this.bgSortItem;
       }
       this.sortBy.choose = dropDownSort.value;
       this.sortBy[dropDownSort.value] = !this.sortBy[dropDownSort.value];
-      let chooseSort = document.querySelector(`.${this.sortBy.choose}`);
-      this.chooseSortItem = document.querySelector(
+      fieldChooseSort = this.queryRoot.querySelector(`.${this.sortBy.choose}`);
+      this.bgSortItem = this.queryRoot.querySelector(
         `.${this.sortBy.choose}`
       ).innerHTML;
 
       if (this.sortBy.choose == 'Country') {
-        if (this.sortBy[this.sortBy.choose]) {
-          this.dataShow = this.dataShow.sort((a, b) =>
-            this.getCountryName(a[this.sortBy.choose]) >
-            this.getCountryName(b[this.sortBy.choose])
-              ? 1
-              : -1
-          );
-          chooseSort.innerHTML = `${this.sortBy.choose}<i class="fa sort fa-sort-asc" aria-hidden="true"></i>`;
-        } else {
-          this.dataShow = this.dataShow.sort((a, b) =>
-            this.getCountryName(a[this.sortBy.choose]) <
-            this.getCountryName(b[this.sortBy.choose])
-              ? 1
-              : -1
-          );
-          chooseSort.innerHTML = `${this.sortBy.choose}<i class="fa sort fa-sort-desc" aria-hidden="true"></i>`;
-        }
-      } else if (this.sortBy[this.sortBy.choose]) {
+        this.dataShow = this.dataShow.sort((a, b) =>
+          this.getCountryName(a[this.sortBy.choose]) >
+          this.getCountryName(b[this.sortBy.choose])
+            ? 1
+            : -1
+        );
+      } else {
         this.dataShow = this.dataShow.sort((a, b) =>
           a[this.sortBy.choose] > b[this.sortBy.choose] ? 1 : -1
         );
-        chooseSort.innerHTML = `${this.sortBy.choose}<i class="fa sort fa-sort-asc" aria-hidden="true"></i>`;
+      }
+
+      if (this.sortBy[this.sortBy.choose]) {
+        fieldChooseSort.innerHTML = `${this.sortBy.choose}<i class="fa sort fa-sort-asc" aria-hidden="true"></i>`;
       } else {
-        this.dataShow = this.dataShow.sort((a, b) =>
-          a[this.sortBy.choose] < b[this.sortBy.choose] ? 1 : -1
-        );
-        chooseSort.innerHTML = `${this.sortBy.choose}<i class="fa sort fa-sort-desc" aria-hidden="true"></i>`;
+        this.dataShow.reverse();
+        fieldChooseSort.innerHTML = `${this.sortBy.choose}<i class="fa sort fa-sort-desc" aria-hidden="true"></i>`;
       }
 
       this.loadData();
     });
   },
-  renderPaginationForm() {
-    const ul = document.createElement('ul');
-    ul.className = 'pagination';
-    let html = `<li>Pages: </li>
-                <li class="btn-prev btn-hover" href="#">Prev</li>
-                <li class="page-number-items"><ul class="page-number-items"></ul></li>
-                <li class="btn-next btn-hover" href="#">Next</li>
-                <li class="btn-last btn-hover" href="#">Last</li>
-                <li class="page-per-total"></li>`;
-    ul.innerHTML = html;
-    document.body.appendChild(ul);
+  renderPagination() {
+    let pageNumberHtml = '';
+    let pageArr;
+    this.queryRoot.querySelector('.pagination').innerHTML = `<li>Pages: </li>
+        <li class="btn-first btn-hover" href="#">First</li>
+        <li class="btn-prev btn-hover" href="#">Prev</li>
+        <li class="page-number-items"><ul class="page-number-items"></ul></li>
+        <li class="btn-next btn-hover" href="#">Next</li>
+        <li class="btn-last btn-hover" href="#">Last</li>
+        <li class="page-per-total"></li>`;
+
+    this.totalPage = Math.ceil(this.dataShow.length / this.size);
+    pageArr = this.pagination();
+    for (let i in pageArr) {
+      if (pageArr[i] == this.currentPage) {
+        pageNumberHtml += `<li class='number-page active'>${pageArr[i]}</li>`;
+      } else if (pageArr[i] != '...') {
+        pageNumberHtml += `<li class='number-page'>${pageArr[i]}</li>`;
+      } else {
+        pageNumberHtml += `<li class='three-dots'>${pageArr[i]}</li>`;
+      }
+    }
+
+    this.queryRoot.querySelector(
+      '.page-per-total'
+    ).innerHTML = `${this.currentPage} of ${this.totalPage}`;
+    this.queryRoot.querySelector('.page-number-items').innerHTML =
+      pageNumberHtml;
   },
   renderSearchRow() {
     let searchRow = document.createElement('tr');
-    searchRow.className = 'search-row';
-    let searchHTML = `<tr>
-    <th><input type="text" class="field-name" /></th>
-    <th><input type="number" class="field-age" /></th>
-    <th>
-      <select name="field-country" class="field-country" id="field-country"></select>
-    </th>
-    <th><input type="text" class="field-address" /></th>
-    <th><input type="checkbox" class="field-married" /></th>
-    <th>
-      <i class="fa btn btn-filter fa-search" aria-hidden="true"></i>
-      <i class="fa btn btn-clear-filter fa-filter" aria-hidden="true"></i>
-    </th>
-  </tr>`;
-    searchRow.innerHTML = searchHTML;
-    let countryDropdown = this.countryData
-      .map((item) => `<option value=${item.Id}>${item.Name}</option>`)
-      .join('');
-
-    document.querySelector('.customer-table thead').appendChild(searchRow);
-    document.querySelector('.field-country').innerHTML = countryDropdown;
+    searchRow.className = 'search-row hidden';
+    searchRow.innerHTML = `<tr>
+                        <th><input type="text" class="field-name" /></th>
+                        <th><input type="number" class="field-age" /></th>
+                        <th>
+                          <select name="field-country" class="field-country" id="field-country">
+                          ${this.countryData
+                            .map(
+                              (item) =>
+                                `<option value=${item.Id}>${item.Name}</option>`
+                            )
+                            .join('')}</select>
+                        </th>
+                        <th><input type="text" class="field-address" /></th>
+                        <th><input type="checkbox" class="field-married"/></th>
+                        <th>
+                          <i class="fa btn btn-filter fa-search" aria-hidden="true"></i>
+                          <i class="fa btn btn-clear-filter fa-filter" aria-hidden="true"></i>
+                        </th>
+                      </tr>`;
+    this.queryRoot
+      .querySelector('.customer-table thead')
+      .appendChild(searchRow);
   },
   renderHeadRow() {
     let headRow = document.createElement('tr');
@@ -837,15 +858,15 @@ const tableCustomer = {
     });
     headerHTML += `<th><a class="btn-search"><i class="fa fa-search" aria-hidden="true"></a></th>`;
     headRow.innerHTML = headerHTML;
-    document.querySelector('.customer-table thead').appendChild(headRow);
+    this.queryRoot.querySelector('.customer-table thead').appendChild(headRow);
   },
-  renderEditRow(user) {
+  renderEditRow(item) {
     return `<tr class='edit-row'>
               <td><input type="text" value='${
-                user.Name
+                item.Name
               }' class="edit-name" /></td>
               <td><input type="number" value=${
-                user.Age
+                item.Age
               } class="edit-age" /></td>
               <td>
                 <select
@@ -854,94 +875,105 @@ const tableCustomer = {
                   id="edit-country"
                 >${this.countryData
                   .map(
-                    (item) =>
-                      `<option value=${item.Id} ${
-                        item.Id == user.Country ? 'selected' : ''
-                      }>${item.Name}</option>`
+                    (country) =>
+                      `<option value=${country.Id} ${
+                        country.Id == item.Country ? 'selected' : ''
+                      }>${country.Name}</option>`
                   )
                   .join('')}</select>
               </td>
               <td><input type="text" value='${
-                user.Address
+                item.Address
               }' class="edit-address" /></td>
               <td class="text-center"><input type="checkbox" class="edit-married" ${
-                user.Married ? 'checked' : ''
+                item.Married ? 'checked' : ''
               }/></td>
               <td class="text-center">
                 <i class="fa btn btn-save fa-check" aria-hidden="true" data-index=${
-                  user.Id
+                  item.Id
                 }></i>
                 <i class="fa btn btn-unsave fa-times" aria-hidden="true" data-index=${
-                  user.Id
+                  item.Id
                 }></i>
               </td>
             </tr>`;
   },
   loadData() {
     let dataTable = '';
-    this.totalPage = Math.ceil(this.dataShow.length / this.size);
-    let pagePerTotal = document.querySelector('.page-per-total');
-    pagePerTotal.innerHTML = `${this.currentPage} of ${this.totalPage}`;
+    let pagePerTotal = this.queryRoot.querySelector('.page-per-total');
     let id = Symbol.for('index');
+    let start, end, data;
 
-    if (this.dataShow.length > 0) {
-      for (let i = this.start; i < this.end; i += 1) {
-        dataTable += `<tr>
-          <td>${this.dataShow[i].Name}</td>
-          <td class="text-center">${this.dataShow[i].Age}</td>
-          <td data-id=${this.dataShow[i].Country}>
-            ${this.getCountryName(this.dataShow[i].Country)}
-          </td>
-          </td><td>${this.dataShow[i].Address}</td>
-          <td class="text-center" data-checked=${this.dataShow[i].Married}>
-              <input type="checkbox" name="married" id="married" ${
-                this.dataShow[i].Married ? 'checked' : ''
-              } disabled/>
-          <td class="text-center">
-              <i class="edit btn btn-edit fa fa-pencil-square-o" aria-hidden="true" data-index=${
-                this.filterActive == 1 ? this.dataShow[i][id] : i
-              }></i>
-              <i class="delete btn btn-delete fa fa-trash" data-index=${
-                this.filterActive == 1 ? this.dataShow[i][id] : i
-              }></i>
-          </td>
-      </tr>`;
-      }
+    pagePerTotal.innerHTML = `${this.currentPage} of ${this.totalPage}`;
+    this.totalPage = Math.ceil(this.dataShow.length / this.size);
+
+    start = (this.currentPage - 1) * this.size;
+    end = this.currentPage * this.size;
+    data = this.dataShow.slice(start, end);
+
+    if (data.length > 0) {
+      dataTable = data
+        .map(
+          (item, index) => `<tr>
+                            <td>${item.Name}</td>
+                            <td class="text-center">${item.Age}</td>
+                            <td data-id=${item.Country}>
+                              ${this.getCountryName(item.Country)}
+                            </td>
+                            </td><td>${item.Address}</td>
+                            <td class="text-center" data-checked=${
+                              item.Married
+                            }>
+                                <input type="checkbox" name="married" id="married" ${
+                                  item.Married ? 'checked' : ''
+                                } disabled/>
+                            <td class="text-center">
+                                <i class="edit btn btn-edit fa fa-pencil-square-o" aria-hidden="true" data-index=${
+                                  this.filterActive == 1 ? item[id] : index
+                                }></i>
+                                <i class="delete btn btn-delete fa fa-trash" data-index=${
+                                  this.filterActive == 1 ? item[id] : index
+                                }></i>
+                            </td>
+                        </tr>`
+        )
+        .join('');
+    } else {
+      dataTable = '<div>No result can be found</div>';
     }
+
     let customerList = document.createElement('tbody');
     customerList.innerHTML = dataTable;
-    document.querySelector('.customer-table tbody').innerHTML = dataTable;
+    this.queryRoot.querySelector('.customer-table tbody').innerHTML = dataTable;
   },
   getCountryName(id) {
-    let result = this.countryData.filter((country) => country.Id == id);
-    return result[0].Name;
+    return this.countryData.find((country) => country.Id == id).Name;
   },
-  renderListPage() {
-    this.totalPage = Math.ceil(this.dataShow.length / this.size);
-    let html = '';
-    let pageArr = this.pagination();
-
-    for (let i in pageArr) {
-      if (pageArr[i] == this.currentPage) {
-        html += `<li class='number-page active'>${pageArr[i]}</li>`;
-      } else if (pageArr[i] != '...') {
-        html += `<li class='number-page'>${pageArr[i]}</li>`;
-      } else {
-        html += `<li class='three-dots'>${pageArr[i]}</li>`;
-      }
+  showOrHideButtonPagination() {
+    if (this.currentPage === 1) {
+      this.queryRoot.querySelector('.btn-prev').className =
+        'btn btn-prev hidden';
+      this.queryRoot.querySelector('.btn-first').className =
+        'btn btn-first hidden';
+    } else {
+      this.queryRoot.querySelector('.btn-prev').className = 'btn btn-prev';
+      this.queryRoot.querySelector('.btn-first').className = 'btn btn-first';
     }
-    let pagePerTotal = document.querySelector('.page-per-total');
-    let pageNumberItems = document.querySelector('.page-number-items');
-
-    pagePerTotal.innerHTML = `${this.currentPage} of ${this.totalPage}`;
-    pageNumberItems.innerHTML = html;
-  },
-  setStartEndValue(start, end) {
-    this.start = start;
-    this.end = end > this.dataShow.length ? this.dataShow.length : end;
+    if (this.currentPage == this.totalPage) {
+      this.queryRoot.querySelector('.btn-next').className =
+        'btn btn-next hidden';
+      this.queryRoot.querySelector('.btn-last').className =
+        'btn btn-last hidden';
+    } else {
+      this.queryRoot.querySelector('.btn-next').className = 'btn btn-next';
+      this.queryRoot.querySelector('.btn-last').className = 'btn btn-last';
+    }
   },
   numberPageChange() {
-    let curPage = document.querySelectorAll('ul.pagination li.number-page');
+    this.showOrHideButtonPagination();
+    let curPage = this.queryRoot.querySelectorAll(
+      'ul.pagination li.number-page'
+    );
     let curPageSize = curPage.length;
     for (let i = 0; i < curPageSize; i += 1) {
       curPage[i].addEventListener('click', () => {
@@ -949,30 +981,31 @@ const tableCustomer = {
         this.currentPage = +curPage[i].textContent;
 
         curPage[i].className = 'active number-page';
-        this.renderListPage();
-        this.setStartEndValue(
-          (this.currentPage - 1) * this.size,
-          this.currentPage * this.size
-        );
+        this.renderPagination();
+        this.currentPageChange();
         this.loadData();
         this.numberPageChange();
       });
     }
   },
   currentPageChange() {
-    let curPage = document.querySelectorAll('ul.pagination li.number-page');
-    let btnNext = document.querySelector('.btn-next');
-    let btnPrevious = document.querySelector('.btn-prev');
-    let btnLast = document.querySelector('.btn-last');
+    let curPage = this.queryRoot.querySelectorAll(
+      'ul.pagination li.number-page'
+    );
+    let btnNext = this.queryRoot.querySelector('.btn-next');
+    let btnPrevious = this.queryRoot.querySelector('.btn-prev');
+    let btnLast = this.queryRoot.querySelector('.btn-last');
+    let btnFirst = this.queryRoot.querySelector('.btn-first');
 
     this.numberPageChange();
 
     btnNext.addEventListener('click', () => {
+      this.showOrHideButtonPagination();
       this.currentPage += 1;
       if (this.currentPage >= this.totalPage) {
         this.currentPage = this.totalPage;
       }
-      curPage = document.querySelectorAll('ul.pagination li.number-page');
+      curPage = this.queryRoot.querySelectorAll('ul.pagination li.number-page');
       $('ul.pagination li.number-page').removeClass('active');
       for (let i in curPage) {
         if (curPage[i].textContent == this.currentPage) {
@@ -984,16 +1017,15 @@ const tableCustomer = {
     });
 
     btnPrevious.addEventListener('click', () => {
-      console.log(this.currentPage);
+      this.showOrHideButtonPagination();
       this.currentPage -= 1;
       if (this.currentPage <= 1) {
         this.currentPage = 1;
       }
 
-      curPage = document.querySelectorAll('ul.pagination li.number-page');
+      curPage = this.queryRoot.querySelectorAll('ul.pagination li.number-page');
       $('ul.pagination li.number-page').removeClass('active');
       for (let i in curPage) {
-        console.log(curPage[i].textContent);
         if (curPage[i].textContent == this.currentPage) {
           curPage[i].className = 'active number-page';
           break;
@@ -1003,20 +1035,27 @@ const tableCustomer = {
     });
 
     btnLast.addEventListener('click', () => {
+      this.showOrHideButtonPagination();
       this.currentPage = this.totalPage;
-      curPage = document.querySelectorAll('ul.pagination li.number-page');
+      curPage = this.queryRoot.querySelectorAll('ul.pagination li.number-page');
       $('ul.pagination li.number-page').removeClass('active');
       curPage[curPage.length - 1].className = 'active number-page';
       reRender();
     });
 
+    btnFirst.addEventListener('click', () => {
+      this.showOrHideButtonPagination();
+      this.currentPage = 1;
+      curPage = this.queryRoot.querySelector('ul.pagination li.number-page');
+      $('ul.pagination li.number-page').removeClass('active');
+      curPage.className = 'active number-page';
+      reRender();
+    });
+
     const reRender = () => {
-      tableCustomer.renderListPage();
+      tableCustomer.renderPagination();
       tableCustomer.numberPageChange();
-      tableCustomer.setStartEndValue(
-        (this.currentPage - 1) * this.size,
-        this.currentPage * this.size
-      );
+      tableCustomer.currentPageChange();
       tableCustomer.loadData();
     };
   },
@@ -1024,13 +1063,17 @@ const tableCustomer = {
     const div = document.createElement('div');
     div.className = `alert alert-${className}`;
     div.appendChild(document.createTextNode(message));
-    const app = document.querySelector('.app');
+    const app = document.querySelector('#app');
     const main = document.querySelector('.main');
     app.insertBefore(div, main);
     setTimeout(() => document.querySelector('.alert').remove(), 1000);
   },
   editInfoCustomer() {
-    const customerList = document.querySelector('.customers-list');
+    const customerList = this.queryRoot.querySelector('.customers-list');
+    let id = Symbol.for('index');
+    let cusInfo;
+    let currentRow;
+
     customerList.addEventListener('click', (e) => {
       const targ = e.target;
       if (targ.classList.contains('edit')) {
@@ -1038,65 +1081,67 @@ const tableCustomer = {
           this.choosingItem.innerHTML = this.bgChoosingItem;
         }
         this.editActive = 1;
-        let row = targ.parentElement.parentElement;
-        this.choosingItem = row;
-        this.bgChoosingItem = row.innerHTML;
-        let cusInfo = {
-          Name: row.children[0].textContent,
-          Age: row.children[1].textContent,
-          Country: Number(row.children[2].dataset.id),
-          Address: row.children[3].textContent,
-          Married: row.children[4].dataset.checked == 'true' ? true : false,
+        currentRow = targ.parentElement.parentElement;
+        this.choosingItem = currentRow;
+        this.bgChoosingItem = currentRow.innerHTML;
+        cusInfo = {
+          Name: currentRow.children[0].textContent,
+          Age: currentRow.children[1].textContent,
+          Country: Number(currentRow.children[2].dataset.id),
+          Address: currentRow.children[3].textContent,
+          Married:
+            currentRow.children[4].dataset.checked == 'true' ? true : false,
           Id: Number(targ.dataset.index),
         };
-        row.innerHTML = this.renderEditRow(cusInfo);
+        currentRow.innerHTML = this.renderEditRow(cusInfo);
 
-        let btnSave = document.querySelector('.btn-save');
-        let btnUnSave = document.querySelector('.btn-unsave');
-
-        btnSave.addEventListener('click', () => {
-          let cusInfo = {};
-          cusInfo.Name = row.children[0].children[0].value;
-          cusInfo.Age = Number(row.children[1].children[0].value);
-          cusInfo.Country = Number(row.children[2].children[0].value);
-          cusInfo.Address = row.children[3].children[0].value;
-          cusInfo.Married = row.children[4].children[0].checked;
-
-          if (validateCusInfo(cusInfo)) {
-            this.JSONData[targ.dataset.index] = cusInfo;
-            row.innerHTML = `<td>${cusInfo.Name}</td>
-                            <td class="text-center">${cusInfo.Age}</td>
-                            <td data-id=${cusInfo.Country}>
-                              ${this.getCountryName(cusInfo.Country)}
-                            </td>
-                            <td>${cusInfo.Address}</td>
-                            <td class="text-center" data-checked=${
-                              cusInfo.Married ? 'true' : 'false'
-                            }>
-                                <input type="checkbox" name="married" id="married" ${
-                                  cusInfo.Married ? 'checked' : ''
-                                } disabled="">
-                            </td><td class="text-center">
-                                <i class="edit btn btn-edit fa fa-pencil-square-o" aria-hidden="true" data-index=${
-                                  targ.dataset.index
-                                }></i>
-                                <i class="delete btn btn-delete fa fa-trash" data-index=${
-                                  targ.dataset.index
-                                }></i>
-                            </td>`;
-            this.editActive = 0;
-            this.dataShow = this.JSONData;
-            if (this.filterActive == 0) {
-              this.loadData();
+        this.queryRoot
+          .querySelector('.btn-save')
+          .addEventListener('click', () => {
+            cusInfo.Name = currentRow.children[0].children[0].value;
+            cusInfo.Age = Number(currentRow.children[1].children[0].value);
+            cusInfo.Country = Number(currentRow.children[2].children[0].value);
+            cusInfo.Address = currentRow.children[3].children[0].value;
+            cusInfo.Married = currentRow.children[4].children[0].checked;
+            cusInfo[id] = targ.dataset.index;
+            if (validateCusInfo(cusInfo)) {
+              this.JSONData[targ.dataset.index] = cusInfo;
+              this.editActive = 0;
+              this.dataShow = this.JSONData;
+              if (this.filterActive == 1) {
+                currentRow.innerHTML = `<td>${cusInfo.Name}</td>
+                        <td class="text-center">${cusInfo.Age}</td>
+                        <td data-id=${cusInfo.Country}>
+                          ${this.getCountryName(cusInfo.Country)}
+                        </td>
+                        <td>${cusInfo.Address}</td>
+                        <td class="text-center" data-checked=${
+                          cusInfo.Married ? 'true' : 'false'
+                        }>
+                            <input type="checkbox" name="married" id="married" ${
+                              cusInfo.Married ? 'checked' : ''
+                            } disabled="">
+                        </td><td class="text-center">
+                            <i class="edit btn btn-edit fa fa-pencil-square-o" aria-hidden="true" data-index=${
+                              targ.dataset.index
+                            }></i>
+                            <i class="delete btn btn-delete fa fa-trash" data-index=${
+                              targ.dataset.index
+                            }></i>
+                        </td>`;
+              } else {
+                this.loadData();
+              }
+              this.showAlert('Sửa thành công', 'success');
             }
-            this.showAlert('Sửa thành công', 'success');
-          }
-        });
+          });
 
-        btnUnSave.addEventListener('click', () => {
-          row.innerHTML = this.bgChoosingItem;
-          this.editActive = 0;
-        });
+        this.queryRoot
+          .querySelector('.btn-unsave')
+          .addEventListener('click', () => {
+            currentRow.innerHTML = this.bgChoosingItem;
+            this.editActive = 0;
+          });
 
         const validateCusInfo = (cusInfo) => {
           if (cusInfo.Name == '') {
@@ -1121,43 +1166,39 @@ const tableCustomer = {
     });
   },
   deleteInfoCustomer() {
-    const customerList = document.querySelector('.customers-list');
-    customerList.addEventListener('click', (e) => {
-      const targ = e.target;
-      let id = Symbol.for('index');
-      if (targ.classList.contains('delete')) {
-        if (confirm('Confirm DELETE this customer?')) {
-          if (this.filterActive == 1) {
-            this.JSONData = this.JSONData.filter(
-              (item) => item[id] != targ.dataset.index
-            );
-            this.dataShow = this.dataShow.filter(
-              (item) => item[id] != targ.dataset.index
-            );
-          } else {
-            this.JSONData.splice(targ.dataset.index, 1);
-          }
-
-          let row = targ.parentElement.parentElement;
-          row.remove();
-          this.showAlert('Xóa thành công', 'success');
-          let newTotalPage = Math.ceil(this.dataShow.length / this.size);
-          if (newTotalPage < this.totalPage) {
-            if (this.currentPage > newTotalPage) {
-              this.currentPage -= 1;
+    this.queryRoot
+      .querySelector('.customers-list')
+      .addEventListener('click', (e) => {
+        const targ = e.target;
+        let id = Symbol.for('index');
+        let newTotalPage;
+        if (targ.classList.contains('delete')) {
+          if (confirm('Confirm DELETE this customer?')) {
+            if (this.filterActive == 1) {
+              this.JSONData = this.JSONData.filter(
+                (item) => item[id] != targ.dataset.index
+              );
+              this.dataShow = this.dataShow.filter(
+                (item) => item[id] != targ.dataset.index
+              );
+            } else {
+              this.JSONData.splice(targ.dataset.index, 1);
             }
-            this.totalPage = newTotalPage;
-            this.renderListPage();
+            targ.parentElement.parentElement.remove();
+            this.showAlert('Xóa thành công', 'success');
+            newTotalPage = Math.ceil(this.dataShow.length / this.size);
+            if (newTotalPage < this.totalPage) {
+              if (this.currentPage > newTotalPage) {
+                this.currentPage -= 1;
+              }
+              this.totalPage = newTotalPage;
+              this.renderPagination();
+            }
+            this.numberPageChange();
+            this.loadData();
           }
-          this.setStartEndValue(
-            (this.currentPage - 1) * this.size,
-            this.currentPage * this.size
-          );
-          this.numberPageChange();
-          this.loadData();
         }
-      }
-    });
+      });
   },
   pagination() {
     let current = this.currentPage,
@@ -1190,45 +1231,54 @@ const tableCustomer = {
   },
   filterByField() {
     let flag = true;
-    let btnSearch = document.querySelector('.btn-search');
-    let btnFilter = document.querySelector('.btn-filter');
-    let fieldMarried = document.querySelector('.field-married');
+    let btnSearch = this.queryRoot.querySelector('.btn-search');
+    let btnFilter = this.queryRoot.querySelector('.btn-filter');
+    let fieldMarried = this.queryRoot.querySelector('.field-married');
+    let btnClearFilter = this.queryRoot.querySelector('.btn-clear-filter');
     let idx = Symbol.for('index');
+
+    fieldMarried.indeterminate = true;
 
     btnSearch.addEventListener('click', () => {
       if (flag) {
-        $('.search-row').show();
+        this.queryRoot.querySelector('.search-row').className = 'search-row';
         this.dataShow = this.JSONData.map((item, index) => {
           item[idx] = index;
           return item;
         });
         this.filterActive = 1;
       } else {
-        $('.search-row').hide();
-        this.filterBy['married'] = 'default';
-        this.dataShow = this.JSONData;
-        this.currentPage = 1;
-        this.setStartEndValue(0, this.size);
-        this.loadData();
-        this.renderListPage();
-        this.numberPageChange();
-        this.filterActive = 0;
+        this.queryRoot.querySelector('.search-row').className =
+          'search-row hidden';
+        clearFilterInput();
       }
       flag = !flag;
     });
 
     fieldMarried.addEventListener('click', () => {
-      this.filterBy['married'] = fieldMarried.checked;
+      switch (this.filterBy['married']) {
+        case 0:
+          this.filterBy['married'] = 2;
+          fieldMarried.indeterminate = true;
+          fieldMarried.checked = !fieldMarried.checked;
+          break;
+        case 1:
+          this.filterBy['married'] = 0;
+          break;
+        default:
+          this.filterBy['married'] = 1;
+      }
     });
 
     btnFilter.addEventListener('click', () => {
       this.dataShow = this.JSONData;
-      this.filterBy['name'] = document
+      this.filterBy['name'] = this.queryRoot
         .querySelector('.field-name')
         .value.trim();
-      this.filterBy['age'] = document.querySelector('.field-age').value;
-      this.filterBy['country'] = document.querySelector('.field-country').value;
-      this.filterBy['address'] = document
+      this.filterBy['age'] = this.queryRoot.querySelector('.field-age').value;
+      this.filterBy['country'] =
+        this.queryRoot.querySelector('.field-country').value;
+      this.filterBy['address'] = this.queryRoot
         .querySelector('.field-address')
         .value.trim();
 
@@ -1255,45 +1305,54 @@ const tableCustomer = {
         );
       }
 
-      if (this.filterBy['married'] != 'default') {
+      if (this.filterBy['married'] != '2') {
         this.dataShow = this.dataShow.filter(
           (item) => item.Married == this.filterBy['married']
         );
       }
 
+      this.currentPage = 1;
+      this.loadData();
+      this.renderPagination();
+      this.numberPageChange();
+      this.currentPageChange();
       if (this.dataShow.length == 0) {
-        this.showAlert('no result can be found', 'info');
+        this.showAlert('No result can be found', 'info');
+        this.queryRoot.querySelector('.pagination').innerHTML = '';
       } else {
         this.showAlert(`${this.dataShow.length} results be found`, 'info');
       }
-      this.currentPage = 1;
-      this.setStartEndValue(0, this.size);
-      this.loadData();
-      this.renderListPage();
-      this.numberPageChange();
     });
 
-    let btnClearFilter = document.querySelector('.btn-clear-filter');
     btnClearFilter.addEventListener('click', () => {
-      this.filterBy['married'] = 'default';
-      document.querySelector('.field-name').value = '';
-      document.querySelector('.field-age').value = '';
-      document.querySelector('.field-country').value = 0;
-      document.querySelector('.field-address').value = '';
-      document.querySelector('.field-married').checked = false;
+      clearFilterInput();
     });
+
+    const clearFilterInput = () => {
+      this.filterBy['married'] = 'default';
+      this.queryRoot.querySelector('.field-name').value = '';
+      this.queryRoot.querySelector('.field-age').value = '';
+      this.queryRoot.querySelector('.field-country').value = 0;
+      this.queryRoot.querySelector('.field-address').value = '';
+      this.queryRoot.querySelector('.field-married').checked = false;
+      this.queryRoot.querySelector('.field-married').indeterminate = true;
+      this.filterBy['married'] = 2;
+      this.dataShow = this.JSONData;
+      this.currentPage = 1;
+      this.renderPagination();
+      this.numberPageChange();
+      this.currentPageChange();
+      this.loadData();
+    };
   },
   filterBy: {
     name: '',
     age: '',
     country: '',
     address: '',
-    married: 'default',
+    married: 2,
   },
-  documentApp: '',
   currentPage: 1,
-  start: 0,
-  end: 0,
   dataShow: [],
   choosingItem: {},
   bgChoosingItem: '',
@@ -1302,29 +1361,26 @@ const tableCustomer = {
   size: 8,
   totalRecord: 0,
   totalPage: 0,
-  init() {
-    this.documentApp = document.querySelector('#app');
+  queryRoot: '',
+  init(container) {
+    this.queryRoot = document.querySelector(container);
     this.dataShow = this.JSONData;
-    this.setStartEndValue(
-      (this.currentPage - 1) * this.size,
-      this.currentPage * this.size
-    );
     this.renderSortForm();
-    this.renderTableForm();
+    this.renderAppForm();
+    this.renderPagination();
     this.renderHeadRow();
     this.renderSearchRow();
     this.filterByField();
-    this.renderPaginationForm();
-    this.renderListPage();
     this.loadData();
     this.currentPageChange();
     this.editInfoCustomer();
     this.deleteInfoCustomer();
+    this.sortByField();
   },
 };
 
 function init() {
-  tableCustomer.init();
+  tableCustomer.init('#app');
 }
 
 init();
