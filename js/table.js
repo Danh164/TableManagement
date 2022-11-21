@@ -718,7 +718,6 @@ const tableCustomer = {
     Country: false,
     Married: false,
     choose: '',
-    bgSortItem: '',
   },
   renderAppForm() {
     let table = document.createElement('table');
@@ -762,14 +761,11 @@ const tableCustomer = {
     btnSort.addEventListener('click', () => {
       if (this.sortBy.choose != '') {
         this.queryRoot.querySelector(`.${this.sortBy.choose}`).innerHTML =
-          this.bgSortItem;
+          this.sortBy.choose;
       }
       this.sortBy.choose = dropDownSort.value;
       this.sortBy[dropDownSort.value] = !this.sortBy[dropDownSort.value];
       fieldChooseSort = this.queryRoot.querySelector(`.${this.sortBy.choose}`);
-      this.bgSortItem = this.queryRoot.querySelector(
-        `.${this.sortBy.choose}`
-      ).innerHTML;
 
       if (this.sortBy.choose == 'Country') {
         this.dataShow = this.dataShow.sort((a, b) =>
@@ -805,7 +801,7 @@ const tableCustomer = {
         <li class="btn-last btn-hover" href="#">Last</li>
         <li class="page-per-total"></li>`;
 
-    this.totalPage = Math.ceil(this.dataShow.length / this.size);
+    this.totalPage = Math.ceil(this.totalRecord / this.size);
     pageArr = this.pagination();
     for (let i in pageArr) {
       if (pageArr[i] == this.currentPage) {
@@ -890,10 +886,10 @@ const tableCustomer = {
               }/></td>
               <td class="text-center">
                 <i class="fa btn btn-save fa-check" aria-hidden="true" data-index=${
-                  item.Id
+                  item.index
                 }></i>
                 <i class="fa btn btn-unsave fa-times" aria-hidden="true" data-index=${
-                  item.Id
+                  item.index
                 }></i>
               </td>
             </tr>`;
@@ -901,43 +897,38 @@ const tableCustomer = {
   loadData() {
     let dataTable = '';
     let pagePerTotal = this.queryRoot.querySelector('.page-per-total');
-    let id = Symbol.for('index');
     let start, end, data;
 
     pagePerTotal.innerHTML = `${this.currentPage} of ${this.totalPage}`;
-    this.totalPage = Math.ceil(this.dataShow.length / this.size);
+    this.totalRecord = this.dataShow.length;
+    this.totalPage = Math.ceil(this.totalRecord / this.size);
 
     start = (this.currentPage - 1) * this.size;
     end = this.currentPage * this.size;
+    if (end > this.totalRecord) {
+      end = this.totalRecord;
+    }
     data = this.dataShow.slice(start, end);
 
     if (data.length > 0) {
-      dataTable = data
-        .map(
-          (item, index) => `<tr>
-                            <td>${item.Name}</td>
-                            <td class="text-center">${item.Age}</td>
-                            <td data-id=${item.Country}>
-                              ${this.getCountryName(item.Country)}
-                            </td>
-                            </td><td>${item.Address}</td>
-                            <td class="text-center" data-checked=${
-                              item.Married
-                            }>
-                                <input type="checkbox" name="married" id="married" ${
-                                  item.Married ? 'checked' : ''
-                                } disabled/>
-                            <td class="text-center">
-                                <i class="edit btn btn-edit fa fa-pencil-square-o" aria-hidden="true" data-index=${
-                                  this.filterActive == 1 ? item[id] : index
-                                }></i>
-                                <i class="delete btn btn-delete fa fa-trash" data-index=${
-                                  this.filterActive == 1 ? item[id] : index
-                                }></i>
-                            </td>
-                        </tr>`
-        )
-        .join('');
+      for (let i = start; i < end; i += 1) {
+        dataTable += `<tr>
+          <td>${this.dataShow[i].Name}</td>
+          <td class="text-center">${this.dataShow[i].Age}</td>
+          <td data-id=${this.dataShow[i].Country}>
+            ${this.getCountryName(this.dataShow[i].Country)}
+          </td>
+          </td><td>${this.dataShow[i].Address}</td>
+          <td class="text-center" data-checked=${this.dataShow[i].Married}>
+              <input type="checkbox" name="married" id="married" ${
+                this.dataShow[i].Married ? 'checked' : ''
+              } disabled/>
+          <td class="text-center">
+              <i class="edit btn btn-edit fa fa-pencil-square-o" aria-hidden="true" data-index=${i}></i>
+              <i class="delete btn btn-delete fa fa-trash" data-index=${i}></i>
+          </td>
+      </tr>`;
+      }
     } else {
       dataTable = '<div>No result can be found</div>';
     }
@@ -1070,7 +1061,6 @@ const tableCustomer = {
   },
   editInfoCustomer() {
     const customerList = this.queryRoot.querySelector('.customers-list');
-    let id = Symbol.for('index');
     let cusInfo;
     let currentRow;
 
@@ -1091,7 +1081,7 @@ const tableCustomer = {
           Address: currentRow.children[3].textContent,
           Married:
             currentRow.children[4].dataset.checked == 'true' ? true : false,
-          Id: Number(targ.dataset.index),
+          index: Number(targ.dataset.index),
         };
         currentRow.innerHTML = this.renderEditRow(cusInfo);
 
@@ -1103,11 +1093,14 @@ const tableCustomer = {
             cusInfo.Country = Number(currentRow.children[2].children[0].value);
             cusInfo.Address = currentRow.children[3].children[0].value;
             cusInfo.Married = currentRow.children[4].children[0].checked;
-            cusInfo[id] = targ.dataset.index;
-            if (validateCusInfo(cusInfo)) {
-              this.JSONData[targ.dataset.index] = cusInfo;
+            if (validateInfomation(cusInfo)) {
+              this.JSONData[
+                this.JSONData.findIndex(
+                  (item) => item == this.dataShow[targ.dataset.index]
+                )
+              ] = cusInfo;
               this.editActive = 0;
-              this.dataShow = this.JSONData;
+              this.dataShow = [...this.JSONData];
               if (this.filterActive == 1) {
                 currentRow.innerHTML = `<td>${cusInfo.Name}</td>
                         <td class="text-center">${cusInfo.Age}</td>
@@ -1143,7 +1136,7 @@ const tableCustomer = {
             this.editActive = 0;
           });
 
-        const validateCusInfo = (cusInfo) => {
+        const validateInfomation = (cusInfo) => {
           if (cusInfo.Name == '') {
             this.showAlert('Tên không được để trống!', 'error');
             return false;
@@ -1170,23 +1163,21 @@ const tableCustomer = {
       .querySelector('.customers-list')
       .addEventListener('click', (e) => {
         const targ = e.target;
-        let id = Symbol.for('index');
         let newTotalPage;
+        let currentRow = targ.parentElement.parentElement;
         if (targ.classList.contains('delete')) {
           if (confirm('Confirm DELETE this customer?')) {
-            if (this.filterActive == 1) {
-              this.JSONData = this.JSONData.filter(
-                (item) => item[id] != targ.dataset.index
-              );
-              this.dataShow = this.dataShow.filter(
-                (item) => item[id] != targ.dataset.index
-              );
-            } else {
-              this.JSONData.splice(targ.dataset.index, 1);
-            }
-            targ.parentElement.parentElement.remove();
+            this.JSONData.splice(
+              this.JSONData.findIndex(
+                (x) => x == this.dataShow[targ.dataset.index]
+              ),
+              1
+            );
+            this.dataShow.splice(targ.dataset.index, 1);
+            currentRow.remove();
             this.showAlert('Xóa thành công', 'success');
-            newTotalPage = Math.ceil(this.dataShow.length / this.size);
+            this.totalRecord = this.dataShow.length;
+            newTotalPage = Math.ceil(this.totalRecord / this.size);
             if (newTotalPage < this.totalPage) {
               if (this.currentPage > newTotalPage) {
                 this.currentPage -= 1;
@@ -1194,6 +1185,7 @@ const tableCustomer = {
               this.totalPage = newTotalPage;
               this.renderPagination();
             }
+            this.currentPageChange();
             this.numberPageChange();
             this.loadData();
           }
@@ -1235,22 +1227,18 @@ const tableCustomer = {
     let btnFilter = this.queryRoot.querySelector('.btn-filter');
     let fieldMarried = this.queryRoot.querySelector('.field-married');
     let btnClearFilter = this.queryRoot.querySelector('.btn-clear-filter');
-    let idx = Symbol.for('index');
 
     fieldMarried.indeterminate = true;
 
     btnSearch.addEventListener('click', () => {
       if (flag) {
         this.queryRoot.querySelector('.search-row').className = 'search-row';
-        this.dataShow = this.JSONData.map((item, index) => {
-          item[idx] = index;
-          return item;
-        });
         this.filterActive = 1;
       } else {
         this.queryRoot.querySelector('.search-row').className =
           'search-row hidden';
         clearFilterInput();
+        this.filterActive = 0;
       }
       flag = !flag;
     });
@@ -1271,7 +1259,11 @@ const tableCustomer = {
     });
 
     btnFilter.addEventListener('click', () => {
-      this.dataShow = this.JSONData;
+      if (this.sortBy.choose != '') {
+        this.queryRoot.querySelector(`.${this.sortBy.choose}`).innerHTML =
+          this.sortBy.choose;
+      }
+      this.dataShow = [...this.JSONData];
       this.filterBy['name'] = this.queryRoot
         .querySelector('.field-name')
         .value.trim();
@@ -1316,15 +1308,21 @@ const tableCustomer = {
       this.renderPagination();
       this.numberPageChange();
       this.currentPageChange();
-      if (this.dataShow.length == 0) {
+
+      this.totalRecord = this.dataShow.length;
+      if (this.totalRecord == 0) {
         this.showAlert('No result can be found', 'info');
         this.queryRoot.querySelector('.pagination').innerHTML = '';
       } else {
-        this.showAlert(`${this.dataShow.length} results be found`, 'info');
+        this.showAlert(`${this.totalRecord} results be found`, 'info');
       }
     });
 
     btnClearFilter.addEventListener('click', () => {
+      if (this.sortBy.choose != '') {
+        this.queryRoot.querySelector(`.${this.sortBy.choose}`).innerHTML =
+          this.sortBy.choose;
+      }
       clearFilterInput();
     });
 
@@ -1337,7 +1335,8 @@ const tableCustomer = {
       this.queryRoot.querySelector('.field-married').checked = false;
       this.queryRoot.querySelector('.field-married').indeterminate = true;
       this.filterBy['married'] = 2;
-      this.dataShow = this.JSONData;
+      this.dataShow = [...this.JSONData];
+      this.totalRecord = this.dataShow.length;
       this.currentPage = 1;
       this.renderPagination();
       this.numberPageChange();
@@ -1364,7 +1363,8 @@ const tableCustomer = {
   queryRoot: '',
   init(container) {
     this.queryRoot = document.querySelector(container);
-    this.dataShow = this.JSONData;
+    this.dataShow = [...this.JSONData];
+    this.totalRecord = this.dataShow.length;
     this.renderSortForm();
     this.renderAppForm();
     this.renderPagination();
