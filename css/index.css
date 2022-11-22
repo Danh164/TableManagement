@@ -86,7 +86,13 @@ h1 {
   right: 10px;
 }
 
+div.page-size {
+  position: absolute;
+  right: 10%;
+}
+
 #sortingField,
+#page-size,
 button#sort {
   padding: 3px;
 }
@@ -193,6 +199,10 @@ button#sort {
   display: flex;
   align-items: center;
   list-style: none;
+}
+
+ul.hidden {
+  display: none;
 }
 
 .page-number-items {

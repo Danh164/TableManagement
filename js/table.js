@@ -719,6 +719,24 @@ const tableCustomer = {
     Married: false,
     choose: '',
   },
+  itemPerPage: [5, 8, 10, 13, 15, 20, 'all'],
+  filterBy: {
+    name: '',
+    age: '',
+    country: '',
+    address: '',
+    married: 2,
+  },
+  currentPage: 1,
+  dataShow: [],
+  choosingItem: {},
+  bgChoosingItem: '',
+  editActive: 0,
+  filterActive: 0,
+  size: 8,
+  totalRecord: 0,
+  totalPage: 0,
+  queryRoot: '',
   renderAppForm() {
     let table = document.createElement('table');
     let ul = document.createElement('ul');
@@ -779,20 +797,16 @@ const tableCustomer = {
           a[this.sortBy.choose] > b[this.sortBy.choose] ? 1 : -1
         );
       }
-
       if (this.sortBy[this.sortBy.choose]) {
         fieldChooseSort.innerHTML = `${this.sortBy.choose}<i class="fa sort fa-sort-asc" aria-hidden="true"></i>`;
       } else {
         this.dataShow.reverse();
         fieldChooseSort.innerHTML = `${this.sortBy.choose}<i class="fa sort fa-sort-desc" aria-hidden="true"></i>`;
       }
-
       this.loadData();
     });
   },
   renderPagination() {
-    let pageNumberHtml = '';
-    let pageArr;
     this.queryRoot.querySelector('.pagination').innerHTML = `<li>Pages: </li>
         <li class="btn-first btn-hover" href="#">First</li>
         <li class="btn-prev btn-hover" href="#">Prev</li>
@@ -800,9 +814,12 @@ const tableCustomer = {
         <li class="btn-next btn-hover" href="#">Next</li>
         <li class="btn-last btn-hover" href="#">Last</li>
         <li class="page-per-total"></li>`;
-
     this.totalPage = Math.ceil(this.totalRecord / this.size);
-    pageArr = this.pagination();
+    this.renderNumberPage();
+  },
+  renderNumberPage() {
+    let pageNumberHtml = '';
+    let pageArr = this.handlePagination();
     for (let i in pageArr) {
       if (pageArr[i] == this.currentPage) {
         pageNumberHtml += `<li class='number-page active'>${pageArr[i]}</li>`;
@@ -812,12 +829,11 @@ const tableCustomer = {
         pageNumberHtml += `<li class='three-dots'>${pageArr[i]}</li>`;
       }
     }
-
+    this.queryRoot.querySelector('.page-number-items').innerHTML =
+      pageNumberHtml;
     this.queryRoot.querySelector(
       '.page-per-total'
     ).innerHTML = `${this.currentPage} of ${this.totalPage}`;
-    this.queryRoot.querySelector('.page-number-items').innerHTML =
-      pageNumberHtml;
   },
   renderSearchRow() {
     let searchRow = document.createElement('tr');
@@ -852,17 +868,19 @@ const tableCustomer = {
     headRowNames.map((item) => {
       headerHTML += `<th class=${item}>${item}</th>`;
     });
-    headerHTML += `<th><a class="btn-search"><i class="fa fa-search" aria-hidden="true"></a></th>`;
+    headerHTML += `<th>
+                      <a class="btn-search"><i class="fa fa-search" aria-hidden="true"></i></a>
+                    </th>`;
     headRow.innerHTML = headerHTML;
     this.queryRoot.querySelector('.customer-table thead').appendChild(headRow);
   },
-  renderEditRow(item) {
+  renderEditRow(index) {
     return `<tr class='edit-row'>
               <td><input type="text" value='${
-                item.Name
+                this.choosingItem.children[0].textContent
               }' class="edit-name" /></td>
               <td><input type="number" value=${
-                item.Age
+                this.choosingItem.children[1].textContent
               } class="edit-age" /></td>
               <td>
                 <select
@@ -873,44 +891,57 @@ const tableCustomer = {
                   .map(
                     (country) =>
                       `<option value=${country.Id} ${
-                        country.Id == item.Country ? 'selected' : ''
+                        country.Id == this.choosingItem.children[2].dataset.id
+                          ? 'selected'
+                          : ''
                       }>${country.Name}</option>`
                   )
                   .join('')}</select>
               </td>
               <td><input type="text" value='${
-                item.Address
+                this.choosingItem.children[3].textContent
               }' class="edit-address" /></td>
               <td class="text-center"><input type="checkbox" class="edit-married" ${
-                item.Married ? 'checked' : ''
+                this.choosingItem.children[4].dataset.checked == 'true'
+                  ? 'checked'
+                  : ''
               }/></td>
               <td class="text-center">
-                <i class="fa btn btn-save fa-check" aria-hidden="true" data-index=${
-                  item.index
-                }></i>
-                <i class="fa btn btn-unsave fa-times" aria-hidden="true" data-index=${
-                  item.index
-                }></i>
+                <i class="fa btn btn-save fa-check" aria-hidden="true" data-index=${index}></i>
+                <i class="fa btn btn-unsave fa-times" aria-hidden="true" data-index=${index}></i>
               </td>
             </tr>`;
   },
+  renderPageSize() {
+    let div = document.createElement('div');
+    let dropdownSort = this.itemPerPage
+      .map(
+        (item) =>
+          `<option value=${item} ${
+            item == this.size ? 'selected' : ''
+          }>${item}</option>`
+      )
+      .join('');
+    div.className = 'page-size';
+    div.innerHTML = `<label>Page size:
+                          <select id="page-size">${dropdownSort}</select>
+                      </label>`;
+    this.queryRoot.querySelector('.pagination').appendChild(div);
+  },
   loadData() {
     let dataTable = '';
-    let pagePerTotal = this.queryRoot.querySelector('.page-per-total');
-    let start, end, data;
-
-    pagePerTotal.innerHTML = `${this.currentPage} of ${this.totalPage}`;
     this.totalRecord = this.dataShow.length;
-    this.totalPage = Math.ceil(this.totalRecord / this.size);
+    if (this.totalRecord > 0) {
+      let pagePerTotal = this.queryRoot.querySelector('.page-per-total');
+      let start, end;
+      pagePerTotal.innerHTML = `${this.currentPage} of ${this.totalPage}`;
+      this.totalPage = Math.ceil(this.totalRecord / this.size);
 
-    start = (this.currentPage - 1) * this.size;
-    end = this.currentPage * this.size;
-    if (end > this.totalRecord) {
-      end = this.totalRecord;
-    }
-    data = this.dataShow.slice(start, end);
-
-    if (data.length > 0) {
+      start = (this.currentPage - 1) * this.size;
+      end = this.currentPage * this.size;
+      if (end > this.totalRecord) {
+        end = this.totalRecord;
+      }
       for (let i = start; i < end; i += 1) {
         dataTable += `<tr>
           <td>${this.dataShow[i].Name}</td>
@@ -972,8 +1003,7 @@ const tableCustomer = {
         this.currentPage = +curPage[i].textContent;
 
         curPage[i].className = 'active number-page';
-        this.renderPagination();
-        this.currentPageChange();
+        this.renderNumberPage();
         this.loadData();
         this.numberPageChange();
       });
@@ -987,8 +1017,6 @@ const tableCustomer = {
     let btnPrevious = this.queryRoot.querySelector('.btn-prev');
     let btnLast = this.queryRoot.querySelector('.btn-last');
     let btnFirst = this.queryRoot.querySelector('.btn-first');
-
-    this.numberPageChange();
 
     btnNext.addEventListener('click', () => {
       this.showOrHideButtonPagination();
@@ -1044,9 +1072,8 @@ const tableCustomer = {
     });
 
     const reRender = () => {
-      tableCustomer.renderPagination();
+      tableCustomer.renderNumberPage();
       tableCustomer.numberPageChange();
-      tableCustomer.currentPageChange();
       tableCustomer.loadData();
     };
   },
@@ -1059,140 +1086,70 @@ const tableCustomer = {
     app.insertBefore(div, main);
     setTimeout(() => document.querySelector('.alert').remove(), 1000);
   },
-  editInfoCustomer() {
-    const customerList = this.queryRoot.querySelector('.customers-list');
-    let cusInfo;
-    let currentRow;
-
-    customerList.addEventListener('click', (e) => {
-      const targ = e.target;
-      if (targ.classList.contains('edit')) {
-        if (this.editActive == 1) {
-          this.choosingItem.innerHTML = this.bgChoosingItem;
-        }
-        this.editActive = 1;
-        currentRow = targ.parentElement.parentElement;
-        this.choosingItem = currentRow;
-        this.bgChoosingItem = currentRow.innerHTML;
-        cusInfo = {
-          Name: currentRow.children[0].textContent,
-          Age: currentRow.children[1].textContent,
-          Country: Number(currentRow.children[2].dataset.id),
-          Address: currentRow.children[3].textContent,
-          Married:
-            currentRow.children[4].dataset.checked == 'true' ? true : false,
-          index: Number(targ.dataset.index),
-        };
-        currentRow.innerHTML = this.renderEditRow(cusInfo);
-
-        this.queryRoot
-          .querySelector('.btn-save')
-          .addEventListener('click', () => {
-            cusInfo.Name = currentRow.children[0].children[0].value;
-            cusInfo.Age = Number(currentRow.children[1].children[0].value);
-            cusInfo.Country = Number(currentRow.children[2].children[0].value);
-            cusInfo.Address = currentRow.children[3].children[0].value;
-            cusInfo.Married = currentRow.children[4].children[0].checked;
-            if (validateInfomation(cusInfo)) {
-              this.JSONData[
-                this.JSONData.findIndex(
-                  (item) => item == this.dataShow[targ.dataset.index]
-                )
-              ] = cusInfo;
-              this.editActive = 0;
-              this.dataShow = [...this.JSONData];
-              if (this.filterActive == 1) {
-                currentRow.innerHTML = `<td>${cusInfo.Name}</td>
-                        <td class="text-center">${cusInfo.Age}</td>
-                        <td data-id=${cusInfo.Country}>
-                          ${this.getCountryName(cusInfo.Country)}
-                        </td>
-                        <td>${cusInfo.Address}</td>
-                        <td class="text-center" data-checked=${
-                          cusInfo.Married ? 'true' : 'false'
-                        }>
-                            <input type="checkbox" name="married" id="married" ${
-                              cusInfo.Married ? 'checked' : ''
-                            } disabled="">
-                        </td><td class="text-center">
-                            <i class="edit btn btn-edit fa fa-pencil-square-o" aria-hidden="true" data-index=${
-                              targ.dataset.index
-                            }></i>
-                            <i class="delete btn btn-delete fa fa-trash" data-index=${
-                              targ.dataset.index
-                            }></i>
-                        </td>`;
-              } else {
-                this.loadData();
-              }
-              this.showAlert('Sửa thành công', 'success');
-            }
-          });
-
-        this.queryRoot
-          .querySelector('.btn-unsave')
-          .addEventListener('click', () => {
-            currentRow.innerHTML = this.bgChoosingItem;
-            this.editActive = 0;
-          });
-
-        const validateInfomation = (cusInfo) => {
-          if (cusInfo.Name == '') {
-            this.showAlert('Tên không được để trống!', 'error');
-            return false;
-          }
-          if (cusInfo.Age < 18 || cusInfo.Age > 80) {
-            this.showAlert('Tuổi từ 18 -> 80', 'error');
-            return false;
-          }
-          if (cusInfo.Country == 0) {
-            this.showAlert('Quốc gia không được để trống!', 'error');
-            return false;
-          }
-          if (cusInfo.Address == '') {
-            this.showAlert('Địa chỉ không được để trống!', 'error');
-            return false;
-          }
-          return true;
-        };
+  saveEditItem(index) {
+    let cusInfo = {};
+    cusInfo.Name = this.choosingItem.children[0].children[0].value;
+    cusInfo.Age = Number(this.choosingItem.children[1].children[0].value);
+    cusInfo.Country = Number(this.choosingItem.children[2].children[0].value);
+    cusInfo.Address = this.choosingItem.children[3].children[0].value;
+    cusInfo.Married = this.choosingItem.children[4].children[0].checked;
+    if (this.validateInfomation(cusInfo)) {
+      this.JSONData[
+        this.JSONData.findIndex((item) => item == this.dataShow[index])
+      ] = cusInfo;
+      this.dataShow[index] = cusInfo;
+      this.editActive = 0;
+      this.loadData();
+      this.showAlert('Sửa thành công', 'success');
+    }
+  },
+  cancelEditItem() {
+    this.choosingItem.innerHTML = this.bgChoosingItem;
+    this.editActive = 0;
+  },
+  handleDeleteItem(index) {
+    let newTotalPage;
+    this.JSONData.splice(
+      this.JSONData.findIndex((x) => x == this.dataShow[index]),
+      1
+    );
+    this.dataShow.splice(index, 1);
+    this.showAlert('Xóa thành công', 'success');
+    this.totalRecord = this.dataShow.length;
+    newTotalPage = Math.ceil(this.totalRecord / this.size);
+    if (newTotalPage < this.totalPage) {
+      if (this.currentPage > newTotalPage) {
+        this.currentPage -= 1;
       }
-    });
+      if (this.currentPage == 0) {
+        this.queryRoot.querySelector('.pagination').className =
+          'pagination hidden';
+      }
+      this.totalPage = newTotalPage;
+      this.renderNumberPage();
+      this.numberPageChange();
+    }
   },
-  deleteInfoCustomer() {
-    this.queryRoot
-      .querySelector('.customers-list')
-      .addEventListener('click', (e) => {
-        const targ = e.target;
-        let newTotalPage;
-        let currentRow = targ.parentElement.parentElement;
-        if (targ.classList.contains('delete')) {
-          if (confirm('Confirm DELETE this customer?')) {
-            this.JSONData.splice(
-              this.JSONData.findIndex(
-                (x) => x == this.dataShow[targ.dataset.index]
-              ),
-              1
-            );
-            this.dataShow.splice(targ.dataset.index, 1);
-            currentRow.remove();
-            this.showAlert('Xóa thành công', 'success');
-            this.totalRecord = this.dataShow.length;
-            newTotalPage = Math.ceil(this.totalRecord / this.size);
-            if (newTotalPage < this.totalPage) {
-              if (this.currentPage > newTotalPage) {
-                this.currentPage -= 1;
-              }
-              this.totalPage = newTotalPage;
-              this.renderPagination();
-            }
-            this.currentPageChange();
-            this.numberPageChange();
-            this.loadData();
-          }
-        }
-      });
+  validateInfomation(item) {
+    if (item.Name == '') {
+      this.showAlert('Tên không được để trống!', 'error');
+      return false;
+    }
+    if (item.Age < 18 || item.Age > 80) {
+      this.showAlert('Tuổi từ 18 -> 80', 'error');
+      return false;
+    }
+    if (item.Country == 0) {
+      this.showAlert('Quốc gia không được để trống!', 'error');
+      return false;
+    }
+    if (item.Address == '') {
+      this.showAlert('Địa chỉ không được để trống!', 'error');
+      return false;
+    }
+    return true;
   },
-  pagination() {
+  handlePagination() {
     let current = this.currentPage,
       last = this.totalPage,
       delta = 2,
@@ -1221,15 +1178,23 @@ const tableCustomer = {
     }
     return rangeWithDots;
   },
-  filterByField() {
+  itemPerPageChange() {
+    let itemPerPage = this.queryRoot.querySelector('#page-size');
+    itemPerPage.addEventListener('change', () => {
+      if (itemPerPage.value != 'all') {
+        this.size = itemPerPage.value;
+      } else {
+        this.size = this.totalRecord;
+      }
+      this.currentPage = 1;
+      this.loadData();
+      this.renderNumberPage();
+      this.numberPageChange();
+    });
+  },
+  handleSearchClick() {
     let flag = true;
     let btnSearch = this.queryRoot.querySelector('.btn-search');
-    let btnFilter = this.queryRoot.querySelector('.btn-filter');
-    let fieldMarried = this.queryRoot.querySelector('.field-married');
-    let btnClearFilter = this.queryRoot.querySelector('.btn-clear-filter');
-
-    fieldMarried.indeterminate = true;
-
     btnSearch.addEventListener('click', () => {
       if (flag) {
         this.queryRoot.querySelector('.search-row').className = 'search-row';
@@ -1237,12 +1202,110 @@ const tableCustomer = {
       } else {
         this.queryRoot.querySelector('.search-row').className =
           'search-row hidden';
-        clearFilterInput();
+        this.handleClearFilter();
         this.filterActive = 0;
       }
       flag = !flag;
     });
+  },
+  handleBtnClearFilterClick() {
+    let btnClearFilter = this.queryRoot.querySelector('.btn-clear-filter');
+    btnClearFilter.addEventListener('click', () => {
+      if (this.sortBy.choose != '') {
+        this.queryRoot.querySelector(`.${this.sortBy.choose}`).innerHTML =
+          this.sortBy.choose;
+      }
+      this.queryRoot.querySelector('.pagination').className = 'pagination';
+      this.handleClearFilter();
+    });
+  },
+  handleClearFilter() {
+    this.filterBy['married'] = 'default';
+    this.queryRoot.querySelector('.field-name').value = '';
+    this.queryRoot.querySelector('.field-age').value = '';
+    this.queryRoot.querySelector('.field-country').value = 0;
+    this.queryRoot.querySelector('.field-address').value = '';
+    this.queryRoot.querySelector('.field-married').checked = false;
+    this.queryRoot.querySelector('.field-married').indeterminate = true;
+    this.filterBy['married'] = 2;
+    this.dataShow = [...this.JSONData];
+    this.totalRecord = this.dataShow.length;
+    this.currentPage = 1;
+    this.loadData();
+    this.renderNumberPage();
+    this.numberPageChange();
+  },
+  getFilterInputValue() {
+    this.filterBy['name'] = this.queryRoot
+      .querySelector('.field-name')
+      .value.trim();
+    this.filterBy['age'] = this.queryRoot.querySelector('.field-age').value;
+    this.filterBy['country'] =
+      this.queryRoot.querySelector('.field-country').value;
+    this.filterBy['address'] = this.queryRoot
+      .querySelector('.field-address')
+      .value.trim();
+  },
+  filterDataByField() {
+    if (this.filterBy['name'] != '') {
+      this.dataShow = this.dataShow.filter((item) =>
+        item.Name.toLowerCase().includes(this.filterBy['name'].toLowerCase())
+      );
+    }
+    if (this.filterBy['age'] > 0) {
+      this.dataShow = this.dataShow.filter(
+        (item) => item.Age == this.filterBy['age']
+      );
+    }
+    if (this.filterBy['country'] > 0) {
+      this.dataShow = this.dataShow.filter(
+        (item) => item.Country == this.filterBy['country']
+      );
+    }
+    if (this.filterBy['address'] != '') {
+      this.dataShow = this.dataShow.filter((item) =>
+        item.Address.toLowerCase().includes(
+          this.filterBy['address'].toLowerCase()
+        )
+      );
+    }
+    if (this.filterBy['married'] != '2') {
+      this.dataShow = this.dataShow.filter(
+        (item) => item.Married == this.filterBy['married']
+      );
+    }
+  },
+  handleFilterClick() {
+    let btnFilter = this.queryRoot.querySelector('.btn-filter');
 
+    btnFilter.addEventListener('click', () => {
+      if (this.sortBy.choose != '') {
+        this.queryRoot.querySelector(`.${this.sortBy.choose}`).innerHTML =
+          this.sortBy.choose;
+      }
+      this.dataShow = [...this.JSONData];
+      this.getFilterInputValue();
+      this.filterDataByField();
+      this.totalRecord = this.dataShow.length;
+
+      if (this.totalRecord == 0) {
+        this.showAlert('No result can be found', 'info');
+        this.queryRoot.querySelector('.pagination').className =
+          'pagination hidden';
+        this.loadData();
+      } else {
+        this.queryRoot.querySelector('.pagination').className = 'pagination';
+        this.showAlert(`${this.totalRecord} results be found`, 'info');
+        this.currentPage = 1;
+        this.loadData();
+        this.renderNumberPage();
+        this.numberPageChange();
+      }
+    });
+  },
+  filterFieldMarried() {
+    let fieldMarried = this.queryRoot.querySelector('.field-married');
+    fieldMarried.indeterminate = true;
     fieldMarried.addEventListener('click', () => {
       switch (this.filterBy['married']) {
         case 0:
@@ -1257,125 +1320,67 @@ const tableCustomer = {
           this.filterBy['married'] = 1;
       }
     });
+  },
+  addEvents() {
+    const customerList = this.queryRoot.querySelector('.customers-list');
+    let currentRow;
+    customerList.addEventListener('click', (e) => {
+      const targ = e.target;
+      currentRow = targ.parentElement.parentElement;
+      if (targ.classList.contains('edit')) {
+        if (this.editActive == 1) {
+          this.choosingItem.innerHTML = this.bgChoosingItem;
+        }
+        this.editActive = 1;
+        currentRow = targ.parentElement.parentElement;
+        this.choosingItem = currentRow;
+        this.bgChoosingItem = currentRow.innerHTML;
+        currentRow.innerHTML = this.renderEditRow(targ.dataset.index);
+        this.queryRoot
+          .querySelector('.btn-save')
+          .addEventListener('click', () => {
+            this.saveEditItem(targ.dataset.index);
+          });
 
-    btnFilter.addEventListener('click', () => {
-      if (this.sortBy.choose != '') {
-        this.queryRoot.querySelector(`.${this.sortBy.choose}`).innerHTML =
-          this.sortBy.choose;
+        this.queryRoot
+          .querySelector('.btn-unsave')
+          .addEventListener('click', () => {
+            this.cancelEditItem();
+          });
       }
-      this.dataShow = [...this.JSONData];
-      this.filterBy['name'] = this.queryRoot
-        .querySelector('.field-name')
-        .value.trim();
-      this.filterBy['age'] = this.queryRoot.querySelector('.field-age').value;
-      this.filterBy['country'] =
-        this.queryRoot.querySelector('.field-country').value;
-      this.filterBy['address'] = this.queryRoot
-        .querySelector('.field-address')
-        .value.trim();
-
-      if (this.filterBy['name'] != '') {
-        this.dataShow = this.dataShow.filter((item) =>
-          item.Name.toLowerCase().includes(this.filterBy['name'].toLowerCase())
-        );
-      }
-      if (this.filterBy['age'] > 0) {
-        this.dataShow = this.dataShow.filter(
-          (item) => item.Age == this.filterBy['age']
-        );
-      }
-      if (this.filterBy['country'] > 0) {
-        this.dataShow = this.dataShow.filter(
-          (item) => item.Country == this.filterBy['country']
-        );
-      }
-      if (this.filterBy['address'] != '') {
-        this.dataShow = this.dataShow.filter((item) =>
-          item.Address.toLowerCase().includes(
-            this.filterBy['address'].toLowerCase()
-          )
-        );
-      }
-
-      if (this.filterBy['married'] != '2') {
-        this.dataShow = this.dataShow.filter(
-          (item) => item.Married == this.filterBy['married']
-        );
-      }
-
-      this.currentPage = 1;
-      this.loadData();
-      this.renderPagination();
-      this.numberPageChange();
-      this.currentPageChange();
-
-      this.totalRecord = this.dataShow.length;
-      if (this.totalRecord == 0) {
-        this.showAlert('No result can be found', 'info');
-        this.queryRoot.querySelector('.pagination').innerHTML = '';
-      } else {
-        this.showAlert(`${this.totalRecord} results be found`, 'info');
+      if (targ.classList.contains('delete')) {
+        if (confirm('Confirm DELETE this customer?')) {
+          currentRow.remove();
+          this.handleDeleteItem(targ.dataset.index);
+        }
+        this.loadData();
       }
     });
 
-    btnClearFilter.addEventListener('click', () => {
-      if (this.sortBy.choose != '') {
-        this.queryRoot.querySelector(`.${this.sortBy.choose}`).innerHTML =
-          this.sortBy.choose;
-      }
-      clearFilterInput();
-    });
-
-    const clearFilterInput = () => {
-      this.filterBy['married'] = 'default';
-      this.queryRoot.querySelector('.field-name').value = '';
-      this.queryRoot.querySelector('.field-age').value = '';
-      this.queryRoot.querySelector('.field-country').value = 0;
-      this.queryRoot.querySelector('.field-address').value = '';
-      this.queryRoot.querySelector('.field-married').checked = false;
-      this.queryRoot.querySelector('.field-married').indeterminate = true;
-      this.filterBy['married'] = 2;
-      this.dataShow = [...this.JSONData];
-      this.totalRecord = this.dataShow.length;
-      this.currentPage = 1;
-      this.renderPagination();
-      this.numberPageChange();
-      this.currentPageChange();
-      this.loadData();
-    };
+    this.handleFilterClick();
+    this.handleBtnClearFilterClick();
+    this.handleSearchClick();
+    this.filterFieldMarried();
+    this.itemPerPageChange();
+    this.currentPageChange();
+    this.numberPageChange();
+    this.sortByField();
   },
-  filterBy: {
-    name: '',
-    age: '',
-    country: '',
-    address: '',
-    married: 2,
-  },
-  currentPage: 1,
-  dataShow: [],
-  choosingItem: {},
-  bgChoosingItem: '',
-  editActive: 0,
-  filterActive: 0,
-  size: 8,
-  totalRecord: 0,
-  totalPage: 0,
-  queryRoot: '',
-  init(container) {
-    this.queryRoot = document.querySelector(container);
-    this.dataShow = [...this.JSONData];
-    this.totalRecord = this.dataShow.length;
+  render() {
     this.renderSortForm();
     this.renderAppForm();
     this.renderPagination();
     this.renderHeadRow();
     this.renderSearchRow();
-    this.filterByField();
+    this.renderPageSize();
+  },
+  init(container) {
+    this.queryRoot = document.querySelector(container);
+    this.dataShow = [...this.JSONData];
+    this.totalRecord = this.dataShow.length;
+    this.render();
     this.loadData();
-    this.currentPageChange();
-    this.editInfoCustomer();
-    this.deleteInfoCustomer();
-    this.sortByField();
+    this.addEvents();
   },
 };
 
