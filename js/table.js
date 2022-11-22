@@ -744,7 +744,7 @@ const tableCustomer = {
     table.className = 'customer-table';
     table.id = 'customer-table';
     table.innerHTML =
-      '<thead class="text-center"></thead><tbody class="customers-list"></tbody>';
+      '<thead class="text-center"></thead><tbody class="list-items"></tbody>';
     this.queryRoot.appendChild(table);
 
     ul.className = 'pagination';
@@ -1193,31 +1193,23 @@ const tableCustomer = {
     });
   },
   handleSearchClick() {
-    let flag = true;
-    let btnSearch = this.queryRoot.querySelector('.btn-search');
-    btnSearch.addEventListener('click', () => {
-      if (flag) {
-        this.queryRoot.querySelector('.search-row').className = 'search-row';
-        this.filterActive = 1;
-      } else {
-        this.queryRoot.querySelector('.search-row').className =
-          'search-row hidden';
-        this.handleClearFilter();
-        this.filterActive = 0;
-      }
-      flag = !flag;
-    });
+    if (this.filterActive == 0) {
+      this.queryRoot.querySelector('.search-row').className = 'search-row';
+      this.filterActive = 1;
+    } else {
+      this.queryRoot.querySelector('.search-row').className =
+        'search-row hidden';
+      this.handleClearFilter();
+      this.filterActive = 0;
+    }
   },
   handleBtnClearFilterClick() {
-    let btnClearFilter = this.queryRoot.querySelector('.btn-clear-filter');
-    btnClearFilter.addEventListener('click', () => {
-      if (this.sortBy.choose != '') {
-        this.queryRoot.querySelector(`.${this.sortBy.choose}`).innerHTML =
-          this.sortBy.choose;
-      }
-      this.queryRoot.querySelector('.pagination').className = 'pagination';
-      this.handleClearFilter();
-    });
+    if (this.sortBy.choose != '') {
+      this.queryRoot.querySelector(`.${this.sortBy.choose}`).innerHTML =
+        this.sortBy.choose;
+    }
+    this.queryRoot.querySelector('.pagination').className = 'pagination';
+    this.handleClearFilter();
   },
   handleClearFilter() {
     this.filterBy['married'] = 'default';
@@ -1276,36 +1268,76 @@ const tableCustomer = {
     }
   },
   handleFilterClick() {
-    let btnFilter = this.queryRoot.querySelector('.btn-filter');
+    if (this.sortBy.choose != '') {
+      this.queryRoot.querySelector(`.${this.sortBy.choose}`).innerHTML =
+        this.sortBy.choose;
+    }
+    this.dataShow = [...this.JSONData];
+    this.getFilterInputValue();
+    this.filterDataByField();
+    this.totalRecord = this.dataShow.length;
 
-    btnFilter.addEventListener('click', () => {
-      if (this.sortBy.choose != '') {
-        this.queryRoot.querySelector(`.${this.sortBy.choose}`).innerHTML =
-          this.sortBy.choose;
+    if (this.totalRecord == 0) {
+      this.showAlert('No result can be found', 'info');
+      this.queryRoot.querySelector('.pagination').className =
+        'pagination hidden';
+      this.loadData();
+    } else {
+      this.queryRoot.querySelector('.pagination').className = 'pagination';
+      this.showAlert(`${this.totalRecord} results be found`, 'info');
+      this.currentPage = 1;
+      this.loadData();
+      this.renderNumberPage();
+      this.numberPageChange();
+    }
+  },
+  addEvents() {
+    const listItems = this.queryRoot.querySelector('.list-items');
+    const btnFilter = this.queryRoot.querySelector('.btn-filter');
+    const btnSearch = this.queryRoot.querySelector('.btn-search');
+    const btnClearFilter = this.queryRoot.querySelector('.btn-clear-filter');
+    const fieldMarried = this.queryRoot.querySelector('.field-married');
+    let currentRow, index, targ;
+    fieldMarried.indeterminate = true;
+
+    listItems.addEventListener('click', (e) => {
+      targ = e.target;
+      currentRow = targ.parentElement.parentElement;
+      if (targ.classList.contains('edit')) {
+        index = targ.dataset.index;
+        if (this.editActive == 1) {
+          this.choosingItem.innerHTML = this.bgChoosingItem;
+        }
+        this.editActive = 1;
+        this.choosingItem = currentRow;
+        this.bgChoosingItem = currentRow.innerHTML;
+        currentRow.innerHTML = this.renderEditRow(index);
+        this.queryRoot
+          .querySelector('.btn-save')
+          .addEventListener('click', () => {
+            this.saveEditItem(index);
+          });
+
+        this.queryRoot
+          .querySelector('.btn-unsave')
+          .addEventListener('click', () => {
+            this.cancelEditItem();
+          });
       }
-      this.dataShow = [...this.JSONData];
-      this.getFilterInputValue();
-      this.filterDataByField();
-      this.totalRecord = this.dataShow.length;
 
-      if (this.totalRecord == 0) {
-        this.showAlert('No result can be found', 'info');
-        this.queryRoot.querySelector('.pagination').className =
-          'pagination hidden';
+      if (targ.classList.contains('delete')) {
+        if (confirm('Confirm DELETE this customer?')) {
+          currentRow.remove();
+          this.handleDeleteItem(targ.dataset.index);
+        }
         this.loadData();
-      } else {
-        this.queryRoot.querySelector('.pagination').className = 'pagination';
-        this.showAlert(`${this.totalRecord} results be found`, 'info');
-        this.currentPage = 1;
-        this.loadData();
-        this.renderNumberPage();
-        this.numberPageChange();
       }
     });
-  },
-  filterFieldMarried() {
-    let fieldMarried = this.queryRoot.querySelector('.field-married');
-    fieldMarried.indeterminate = true;
+    btnFilter.addEventListener('click', () => this.handleFilterClick());
+    btnClearFilter.addEventListener('click', () =>
+      this.handleBtnClearFilterClick()
+    );
+    btnSearch.addEventListener('click', () => this.handleSearchClick());
     fieldMarried.addEventListener('click', () => {
       switch (this.filterBy['married']) {
         case 0:
@@ -1320,47 +1352,7 @@ const tableCustomer = {
           this.filterBy['married'] = 1;
       }
     });
-  },
-  addEvents() {
-    const customerList = this.queryRoot.querySelector('.customers-list');
-    let currentRow;
-    customerList.addEventListener('click', (e) => {
-      const targ = e.target;
-      currentRow = targ.parentElement.parentElement;
-      if (targ.classList.contains('edit')) {
-        if (this.editActive == 1) {
-          this.choosingItem.innerHTML = this.bgChoosingItem;
-        }
-        this.editActive = 1;
-        currentRow = targ.parentElement.parentElement;
-        this.choosingItem = currentRow;
-        this.bgChoosingItem = currentRow.innerHTML;
-        currentRow.innerHTML = this.renderEditRow(targ.dataset.index);
-        this.queryRoot
-          .querySelector('.btn-save')
-          .addEventListener('click', () => {
-            this.saveEditItem(targ.dataset.index);
-          });
 
-        this.queryRoot
-          .querySelector('.btn-unsave')
-          .addEventListener('click', () => {
-            this.cancelEditItem();
-          });
-      }
-      if (targ.classList.contains('delete')) {
-        if (confirm('Confirm DELETE this customer?')) {
-          currentRow.remove();
-          this.handleDeleteItem(targ.dataset.index);
-        }
-        this.loadData();
-      }
-    });
-
-    this.handleFilterClick();
-    this.handleBtnClearFilterClick();
-    this.handleSearchClick();
-    this.filterFieldMarried();
     this.itemPerPageChange();
     this.currentPageChange();
     this.numberPageChange();
