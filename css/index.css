@@ -96,6 +96,9 @@ div.page-size {
 button#sort {
   padding: 3px;
 }
+button#sort {
+  margin-left: 5px;
+}
 
 .customer-table thead tr.search-row th input,
 .customer-table thead tr.search-row th select {

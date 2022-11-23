@@ -727,9 +727,9 @@ const tableCustomer = {
     address: '',
     married: 2,
   },
-  currentPage: 1,
   dataShow: [],
   choosingItem: {},
+  currentPage: 1,
   bgChoosingItem: '',
   editActive: 0,
   filterActive: 0,
@@ -739,80 +739,52 @@ const tableCustomer = {
   queryRoot: '',
   renderAppForm() {
     let table = document.createElement('table');
+    let thead = document.createElement('thead');
+    let tbody = document.createElement('tbody');
     let ul = document.createElement('ul');
 
     table.className = 'customer-table';
     table.id = 'customer-table';
-    table.innerHTML =
-      '<thead class="text-center"></thead><tbody class="list-items"></tbody>';
+    thead.className = 'text-center';
+    tbody.className = 'list-items';
+
+    table.appendChild(thead);
+    table.appendChild(tbody);
     this.queryRoot.appendChild(table);
 
     ul.className = 'pagination';
     this.queryRoot.appendChild(ul);
   },
-  renderTableForm() {
-    let table = document.createElement('table');
-    table.className = 'customer-table';
-    table.id = 'customer-table';
-    let tableHtml =
-      '<thead class="text-center"></thead><tbody class="customers-list"></tbody>';
-    table.innerHTML = tableHtml;
-    this.queryRoot.appendChild(table);
-  },
   renderSortForm() {
     let div = document.createElement('div');
-    let dropdownSort = '';
-    for (let i in this.JSONData[0]) {
-      dropdownSort += `<option value=${i}>${i}</option>`;
-    }
-    div.className = 'sort-panel';
-    div.innerHTML = `<label>Sorting Field:
-                          <select id="sortingField">  ${dropdownSort}</select>
-                          <button type="button" id="sort">Sort</button>
-                      </label>`;
-    this.queryRoot.appendChild(div);
-  },
-  sortByField() {
-    let btnSort = this.queryRoot.querySelector('#sort');
-    let dropDownSort = this.queryRoot.querySelector('#sortingField');
-    let fieldChooseSort;
-    btnSort.addEventListener('click', () => {
-      if (this.sortBy.choose != '') {
-        this.queryRoot.querySelector(`.${this.sortBy.choose}`).innerHTML =
-          this.sortBy.choose;
-      }
-      this.sortBy.choose = dropDownSort.value;
-      this.sortBy[dropDownSort.value] = !this.sortBy[dropDownSort.value];
-      fieldChooseSort = this.queryRoot.querySelector(`.${this.sortBy.choose}`);
+    let select = document.createElement('select');
+    let button = document.createElement('button');
+    let label = document.createElement('label');
 
-      if (this.sortBy.choose == 'Country') {
-        this.dataShow = this.dataShow.sort((a, b) =>
-          this.getCountryName(a[this.sortBy.choose]) >
-          this.getCountryName(b[this.sortBy.choose])
-            ? 1
-            : -1
-        );
-      } else {
-        this.dataShow = this.dataShow.sort((a, b) =>
-          a[this.sortBy.choose] > b[this.sortBy.choose] ? 1 : -1
-        );
-      }
-      if (this.sortBy[this.sortBy.choose]) {
-        fieldChooseSort.innerHTML = `${this.sortBy.choose}<i class="fa sort fa-sort-asc" aria-hidden="true"></i>`;
-      } else {
-        this.dataShow.reverse();
-        fieldChooseSort.innerHTML = `${this.sortBy.choose}<i class="fa sort fa-sort-desc" aria-hidden="true"></i>`;
-      }
-      this.loadData();
-    });
+    for (let i in this.JSONData[0]) {
+      let option = document.createElement('option');
+      option.value = i;
+      option.textContent = i;
+      select.appendChild(option);
+    }
+    select.id = 'sortingField';
+    button.type = 'button';
+    button.id = 'sort';
+    button.textContent = 'Sort';
+    label.textContent = 'Sorting Field: ';
+    label.appendChild(select);
+    label.appendChild(button);
+    div.className = 'sort-panel';
+    div.appendChild(label);
+    this.queryRoot.appendChild(div);
   },
   renderPagination() {
     this.queryRoot.querySelector('.pagination').innerHTML = `<li>Pages: </li>
-        <li class="btn-first btn-hover" href="#">First</li>
-        <li class="btn-prev btn-hover" href="#">Prev</li>
+        <li class="btn-first btn-hover" >First</li>
+        <li class="btn-prev btn-hover">Prev</li>
         <li class="page-number-items"><ul class="page-number-items"></ul></li>
-        <li class="btn-next btn-hover" href="#">Next</li>
-        <li class="btn-last btn-hover" href="#">Last</li>
+        <li class="btn-next btn-hover">Next</li>
+        <li class="btn-last btn-hover" >Last</li>
         <li class="page-per-total"></li>`;
     this.totalPage = Math.ceil(this.totalRecord / this.size);
     this.renderNumberPage();
@@ -821,10 +793,10 @@ const tableCustomer = {
     let pageNumberHtml = '';
     let pageArr = this.handlePagination();
     for (let i in pageArr) {
-      if (pageArr[i] == this.currentPage) {
-        pageNumberHtml += `<li class='number-page active'>${pageArr[i]}</li>`;
-      } else if (pageArr[i] != '...') {
-        pageNumberHtml += `<li class='number-page'>${pageArr[i]}</li>`;
+      if (pageArr[i] != '...') {
+        pageNumberHtml += `<li class='number-page ${
+          pageArr[i] == this.currentPage ? 'active' : ''
+        }'>${pageArr[i]}</li>`;
       } else {
         pageNumberHtml += `<li class='three-dots'>${pageArr[i]}</li>`;
       }
@@ -834,6 +806,7 @@ const tableCustomer = {
     this.queryRoot.querySelector(
       '.page-per-total'
     ).innerHTML = `${this.currentPage} of ${this.totalPage}`;
+    this.numberPageChange();
   },
   renderSearchRow() {
     let searchRow = document.createElement('tr');
@@ -930,13 +903,13 @@ const tableCustomer = {
   },
   loadData() {
     let dataTable = '';
+    let start, end;
     this.totalRecord = this.dataShow.length;
     if (this.totalRecord > 0) {
-      let pagePerTotal = this.queryRoot.querySelector('.page-per-total');
-      let start, end;
-      pagePerTotal.innerHTML = `${this.currentPage} of ${this.totalPage}`;
+      this.queryRoot.querySelector(
+        '.page-per-total'
+      ).innerHTML = `${this.currentPage} of ${this.totalPage}`;
       this.totalPage = Math.ceil(this.totalRecord / this.size);
-
       start = (this.currentPage - 1) * this.size;
       end = this.currentPage * this.size;
       if (end > this.totalRecord) {
@@ -963,33 +936,39 @@ const tableCustomer = {
     } else {
       dataTable = '<div>No result can be found</div>';
     }
-
-    let customerList = document.createElement('tbody');
-    customerList.innerHTML = dataTable;
     this.queryRoot.querySelector('.customer-table tbody').innerHTML = dataTable;
+  },
+  sortByField(field) {
+    let fieldChooseSort = this.queryRoot.querySelector(`.${field}`);
+    if (field == 'Country') {
+      this.dataShow = this.dataShow.sort((a, b) =>
+        this.getCountryName(a[field]) > this.getCountryName(b[field]) ? 1 : -1
+      );
+    } else {
+      this.dataShow = this.dataShow.sort((a, b) =>
+        a[field] > b[field] ? 1 : -1
+      );
+    }
+    if (this.sortBy[field]) {
+      fieldChooseSort.innerHTML = `${field}<i class="fa sort fa-sort-asc" aria-hidden="true"></i>`;
+    } else {
+      this.dataShow.reverse();
+      fieldChooseSort.innerHTML = `${field}<i class="fa sort fa-sort-desc" aria-hidden="true"></i>`;
+    }
+  },
+  handleSortData() {
+    let field = this.queryRoot.querySelector('#sortingField').value;
+    if (this.sortBy.choose != '') {
+      this.queryRoot.querySelector(`.${this.sortBy.choose}`).innerHTML =
+        this.sortBy.choose;
+    }
+    this.sortBy.choose = field;
+    this.sortBy[field] = !this.sortBy[field];
+    this.sortByField(field);
+    this.loadData();
   },
   getCountryName(id) {
     return this.countryData.find((country) => country.Id == id).Name;
-  },
-  showOrHideButtonPagination() {
-    if (this.currentPage === 1) {
-      this.queryRoot.querySelector('.btn-prev').className =
-        'btn btn-prev hidden';
-      this.queryRoot.querySelector('.btn-first').className =
-        'btn btn-first hidden';
-    } else {
-      this.queryRoot.querySelector('.btn-prev').className = 'btn btn-prev';
-      this.queryRoot.querySelector('.btn-first').className = 'btn btn-first';
-    }
-    if (this.currentPage == this.totalPage) {
-      this.queryRoot.querySelector('.btn-next').className =
-        'btn btn-next hidden';
-      this.queryRoot.querySelector('.btn-last').className =
-        'btn btn-last hidden';
-    } else {
-      this.queryRoot.querySelector('.btn-next').className = 'btn btn-next';
-      this.queryRoot.querySelector('.btn-last').className = 'btn btn-last';
-    }
   },
   numberPageChange() {
     this.showOrHideButtonPagination();
@@ -1005,85 +984,14 @@ const tableCustomer = {
         curPage[i].className = 'active number-page';
         this.renderNumberPage();
         this.loadData();
-        this.numberPageChange();
       });
     }
-  },
-  currentPageChange() {
-    let curPage = this.queryRoot.querySelectorAll(
-      'ul.pagination li.number-page'
-    );
-    let btnNext = this.queryRoot.querySelector('.btn-next');
-    let btnPrevious = this.queryRoot.querySelector('.btn-prev');
-    let btnLast = this.queryRoot.querySelector('.btn-last');
-    let btnFirst = this.queryRoot.querySelector('.btn-first');
-
-    btnNext.addEventListener('click', () => {
-      this.showOrHideButtonPagination();
-      this.currentPage += 1;
-      if (this.currentPage >= this.totalPage) {
-        this.currentPage = this.totalPage;
-      }
-      curPage = this.queryRoot.querySelectorAll('ul.pagination li.number-page');
-      $('ul.pagination li.number-page').removeClass('active');
-      for (let i in curPage) {
-        if (curPage[i].textContent == this.currentPage) {
-          curPage[i].className = 'active number-page';
-          reRender();
-          break;
-        }
-      }
-    });
-
-    btnPrevious.addEventListener('click', () => {
-      this.showOrHideButtonPagination();
-      this.currentPage -= 1;
-      if (this.currentPage <= 1) {
-        this.currentPage = 1;
-      }
-
-      curPage = this.queryRoot.querySelectorAll('ul.pagination li.number-page');
-      $('ul.pagination li.number-page').removeClass('active');
-      for (let i in curPage) {
-        if (curPage[i].textContent == this.currentPage) {
-          curPage[i].className = 'active number-page';
-          break;
-        }
-      }
-      reRender();
-    });
-
-    btnLast.addEventListener('click', () => {
-      this.showOrHideButtonPagination();
-      this.currentPage = this.totalPage;
-      curPage = this.queryRoot.querySelectorAll('ul.pagination li.number-page');
-      $('ul.pagination li.number-page').removeClass('active');
-      curPage[curPage.length - 1].className = 'active number-page';
-      reRender();
-    });
-
-    btnFirst.addEventListener('click', () => {
-      this.showOrHideButtonPagination();
-      this.currentPage = 1;
-      curPage = this.queryRoot.querySelector('ul.pagination li.number-page');
-      $('ul.pagination li.number-page').removeClass('active');
-      curPage.className = 'active number-page';
-      reRender();
-    });
-
-    const reRender = () => {
-      tableCustomer.renderNumberPage();
-      tableCustomer.numberPageChange();
-      tableCustomer.loadData();
-    };
   },
   showAlert(message, className) {
     const div = document.createElement('div');
     div.className = `alert alert-${className}`;
     div.appendChild(document.createTextNode(message));
-    const app = document.querySelector('#app');
-    const main = document.querySelector('.main');
-    app.insertBefore(div, main);
+    this.queryRoot.appendChild(div);
     setTimeout(() => document.querySelector('.alert').remove(), 1000);
   },
   saveEditItem(index) {
@@ -1127,7 +1035,6 @@ const tableCustomer = {
       }
       this.totalPage = newTotalPage;
       this.renderNumberPage();
-      this.numberPageChange();
     }
   },
   validateInfomation(item) {
@@ -1178,29 +1085,15 @@ const tableCustomer = {
     }
     return rangeWithDots;
   },
-  itemPerPageChange() {
-    let itemPerPage = this.queryRoot.querySelector('#page-size');
-    itemPerPage.addEventListener('change', () => {
-      if (itemPerPage.value != 'all') {
-        this.size = itemPerPage.value;
-      } else {
-        this.size = this.totalRecord;
-      }
-      this.currentPage = 1;
-      this.loadData();
-      this.renderNumberPage();
-      this.numberPageChange();
-    });
-  },
   handleSearchClick() {
-    if (this.filterActive == 0) {
-      this.queryRoot.querySelector('.search-row').className = 'search-row';
-      this.filterActive = 1;
-    } else {
+    if (this.filterActive) {
       this.queryRoot.querySelector('.search-row').className =
         'search-row hidden';
       this.handleClearFilter();
       this.filterActive = 0;
+    } else {
+      this.queryRoot.querySelector('.search-row').className = 'search-row';
+      this.filterActive = 1;
     }
   },
   handleBtnClearFilterClick() {
@@ -1225,7 +1118,6 @@ const tableCustomer = {
     this.currentPage = 1;
     this.loadData();
     this.renderNumberPage();
-    this.numberPageChange();
   },
   getFilterInputValue() {
     this.filterBy['name'] = this.queryRoot
@@ -1288,7 +1180,32 @@ const tableCustomer = {
       this.currentPage = 1;
       this.loadData();
       this.renderNumberPage();
-      this.numberPageChange();
+    }
+  },
+  handleButtonPaginationClick(currentPage) {
+    this.currentPage = currentPage;
+    this.showOrHideButtonPagination();
+    this.renderNumberPage();
+    this.loadData();
+  },
+  showOrHideButtonPagination() {
+    const prev = this.queryRoot.querySelector('.btn-prev');
+    const first = this.queryRoot.querySelector('.btn-first');
+    const next = this.queryRoot.querySelector('.btn-next');
+    const last = this.queryRoot.querySelector('.btn-last');
+    if (this.currentPage === 1) {
+      prev.className = 'btn btn-prev hidden';
+      first.className = 'btn btn-first hidden';
+    } else {
+      prev.className = 'btn btn-prev';
+      first.className = 'btn btn-first';
+    }
+    if (this.currentPage == this.totalPage) {
+      next.className = 'btn btn-next hidden';
+      last.className = 'btn btn-last hidden';
+    } else {
+      next.className = 'btn btn-next';
+      last.className = 'btn btn-last';
     }
   },
   addEvents() {
@@ -1297,6 +1214,12 @@ const tableCustomer = {
     const btnSearch = this.queryRoot.querySelector('.btn-search');
     const btnClearFilter = this.queryRoot.querySelector('.btn-clear-filter');
     const fieldMarried = this.queryRoot.querySelector('.field-married');
+    const btnSort = this.queryRoot.querySelector('#sort');
+    const itemPerPage = this.queryRoot.querySelector('#page-size');
+    const btnNext = this.queryRoot.querySelector('.btn-next');
+    const btnPrevious = this.queryRoot.querySelector('.btn-prev');
+    const btnLast = this.queryRoot.querySelector('.btn-last');
+    const btnFirst = this.queryRoot.querySelector('.btn-first');
     let currentRow, index, targ;
     fieldMarried.indeterminate = true;
 
@@ -1333,6 +1256,7 @@ const tableCustomer = {
         this.loadData();
       }
     });
+    btnSort.addEventListener('click', () => this.handleSortData());
     btnFilter.addEventListener('click', () => this.handleFilterClick());
     btnClearFilter.addEventListener('click', () =>
       this.handleBtnClearFilterClick()
@@ -1353,10 +1277,32 @@ const tableCustomer = {
       }
     });
 
-    this.itemPerPageChange();
-    this.currentPageChange();
-    this.numberPageChange();
-    this.sortByField();
+    itemPerPage.addEventListener('change', () => {
+      if (itemPerPage.value != 'all') {
+        this.size = itemPerPage.value;
+      } else {
+        this.size = this.totalRecord;
+      }
+      this.currentPage = 1;
+      this.loadData();
+      this.renderNumberPage();
+    });
+
+    btnNext.addEventListener('click', () =>
+      this.handleButtonPaginationClick(this.currentPage + 1)
+    );
+
+    btnPrevious.addEventListener('click', () =>
+      this.handleButtonPaginationClick(this.currentPage - 1)
+    );
+
+    btnLast.addEventListener('click', () =>
+      this.handleButtonPaginationClick(this.totalPage)
+    );
+
+    btnFirst.addEventListener('click', () =>
+      this.handleButtonPaginationClick(1)
+    );
   },
   render() {
     this.renderSortForm();
